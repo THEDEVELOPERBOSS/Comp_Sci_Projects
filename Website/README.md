@@ -1,5 +1,5 @@
-# Avery Chen Portfolio
+# Mark Dahl Developer Portfolio
 
-A dependency-free dark-mode developer portfolio with Apple-inspired polish and GitHub-like developer details.
+A dependency-free developer portfolio for Mark Dahl, an aspiring developer with three years of experience across web development, AI, C++, and Python.
 
 Open `index.html` directly in a browser. No build step is required.
