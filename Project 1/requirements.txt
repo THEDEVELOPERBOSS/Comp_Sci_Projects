@@ -1,0 +1,4 @@
+tensorflow
+requests
+tqdm
+Pillow
