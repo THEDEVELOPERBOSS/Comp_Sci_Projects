@@ -1,6 +1,7 @@
 import json
 import random
 import shutil
+import time
 import zipfile
 from collections import defaultdict
 from pathlib import Path
@@ -73,14 +74,16 @@ COCO_CLASSES = {
 # ============================================================
 
 TRAIN_IMAGE_URL = (
-    "http://images.cocodataset.org/train2017/"
+    "http://52.216.33.1/train2017/"
     "{file_name}"
 )
 
 VAL_IMAGE_URL = (
-    "http://images.cocodataset.org/val2017/"
+    "http://52.216.33.1/val2017/"
     "{file_name}"
 )
+
+COCO_HOST_HEADER = "images.cocodataset.org"
 
 
 # ============================================================
@@ -269,9 +272,13 @@ def download_image(
         file_name
     )
 
-    if image_path.exists():
+    if image_path.exists() and image_path.stat().st_size > 0:
 
         return image_path
+
+    if image_path.exists():
+
+        image_path.unlink()
 
     if split == "train":
 
@@ -291,30 +298,71 @@ def download_image(
 
     try:
 
-        response = requests.get(
-            url,
-            stream=True,
-            timeout=60
+        partial_path = image_path.with_suffix(
+            image_path.suffix + ".part"
         )
 
-        response.raise_for_status()
+        with requests.Session() as session:
 
-        with open(
-            image_path,
-            "wb"
-        ) as file:
+            session.trust_env = False
 
-            for chunk in response.iter_content(
-                chunk_size=1024 * 1024
-            ):
+            with session.get(
+                url,
+                headers={
+                    "Host": COCO_HOST_HEADER
+                },
+                stream=True,
+                timeout=(10, 30)
+            ) as response:
 
-                if chunk:
+                response.raise_for_status()
 
-                    file.write(chunk)
+                with open(
+                    partial_path,
+                    "wb"
+                ) as file:
+
+                    for chunk in response.iter_content(
+                        chunk_size=1024 * 1024
+                    ):
+
+                        if chunk:
+
+                            file.write(chunk)
+
+        for attempt in range(5):
+
+            try:
+
+                partial_path.replace(image_path)
+
+                break
+
+            except PermissionError:
+
+                if attempt == 4:
+
+                    raise
+
+                time.sleep(0.2)
 
         return image_path
 
     except Exception as error:
+
+        if "partial_path" in locals() and partial_path.exists():
+
+            try:
+
+                partial_path.unlink()
+
+            except PermissionError:
+
+                pass
+
+        if image_path.exists() and image_path.stat().st_size == 0:
+
+            image_path.unlink()
 
         print(
             f"Failed to download "
@@ -531,6 +579,15 @@ def collect_class_images(
 
         # Don't recreate an existing crop.
         if output_file.exists():
+
+            continue
+
+        _, _, width, height = annotation["bbox"]
+
+        if (
+            width < MIN_OBJECT_SIZE
+            or height < MIN_OBJECT_SIZE
+        ):
 
             continue
 
