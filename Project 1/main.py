@@ -246,3 +246,25 @@ print(
 print(
     MODEL_PATH
 )
+# ============================================================
+# TEST MODEL
+# ============================================================
+
+print("\nLoading test data...")
+
+test_data = tf.keras.utils.image_dataset_from_directory(
+    str(TEST_DIR),
+    image_size=IMAGE_SIZE,
+    batch_size=BATCH_SIZE,
+    label_mode="int",
+    shuffle=False
+)
+
+print("\nTesting model...")
+
+test_loss, test_accuracy = model.evaluate(test_data)
+
+print(
+    f"\nTest accuracy: "
+    f"{test_accuracy * 100:.2f}%"
+)
