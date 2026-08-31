@@ -8,11 +8,16 @@ from coco_builder import build_coco_dataset
 # ============================================================
 
 IMAGE_SIZE = (128, 128)
+
 BATCH_SIZE = 32
+
 EPOCHS = 10
 
 TRAIN_DIR = "dataset/classification/train"
+
 VAL_DIR = "dataset/classification/val"
+
+TEST_DIR = "dataset/classification/test"
 
 MODEL_PATH = "image_classifier.keras"
 
@@ -28,13 +33,22 @@ build_coco_dataset()
 # LOAD TRAINING DATA
 # ============================================================
 
-train_data = tf.keras.utils.image_dataset_from_directory(
-    TRAIN_DIR,
-    image_size=IMAGE_SIZE,
-    batch_size=BATCH_SIZE,
-    label_mode="int",
-    shuffle=True,
-    seed=42
+print("\nLoading training data...")
+
+train_data = (
+    tf.keras.utils.image_dataset_from_directory(
+        TRAIN_DIR,
+
+        image_size=IMAGE_SIZE,
+
+        batch_size=BATCH_SIZE,
+
+        label_mode="int",
+
+        shuffle=True,
+
+        seed=42
+    )
 )
 
 
@@ -42,12 +56,20 @@ train_data = tf.keras.utils.image_dataset_from_directory(
 # LOAD VALIDATION DATA
 # ============================================================
 
-validation_data = tf.keras.utils.image_dataset_from_directory(
-    VAL_DIR,
-    image_size=IMAGE_SIZE,
-    batch_size=BATCH_SIZE,
-    label_mode="int",
-    shuffle=False
+print("\nLoading validation data...")
+
+validation_data = (
+    tf.keras.utils.image_dataset_from_directory(
+        VAL_DIR,
+
+        image_size=IMAGE_SIZE,
+
+        batch_size=BATCH_SIZE,
+
+        label_mode="int",
+
+        shuffle=False
+    )
 )
 
 
@@ -55,53 +77,72 @@ validation_data = tf.keras.utils.image_dataset_from_directory(
 # GET CLASS NAMES
 # ============================================================
 
-class_names = train_data.class_names
+class_names = (
+    train_data.class_names
+)
+
+NUM_CLASSES = len(
+    class_names
+)
 
 print("\nClasses:")
-for i, name in enumerate(class_names):
-    print(f"{i}: {name}")
 
-NUM_CLASSES = len(class_names)
+for i, class_name in enumerate(
+    class_names
+):
 
-print(f"\nNumber of classes: {NUM_CLASSES}")
+    print(
+        f"  {i}: {class_name}"
+    )
 
-
-# ============================================================
-# IMPROVE DATA PIPELINE SPEED
-# ============================================================
-
-AUTOTUNE = tf.data.AUTOTUNE
-
-train_data = train_data.prefetch(
-    buffer_size=AUTOTUNE
-)
-
-validation_data = validation_data.prefetch(
-    buffer_size=AUTOTUNE
+print(
+    f"\nNumber of classes: "
+    f"{NUM_CLASSES}"
 )
 
 
 # ============================================================
-# BUILD NEURAL NETWORK
+# SPEED UP DATA PIPELINE
 # ============================================================
 
-model = tf.keras.Sequential([ # Sequential takes the output of one layer and feed it directly into the next layer
+AUTOTUNE = (
+    tf.data.AUTOTUNE
+)
 
-    # Convert pixel values from 0-255 to 0-1
+train_data = (
+    train_data.prefetch(
+        buffer_size=AUTOTUNE
+    )
+)
+
+validation_data = (
+    validation_data.prefetch(
+        buffer_size=AUTOTUNE
+    )
+)
+
+
+# ============================================================
+# BUILD CNN
+# ============================================================
+
+model = tf.keras.Sequential([
+
+    # Normalize pixels from 0-255 to 0-1
     tf.keras.layers.Rescaling(
         1.0 / 255
     ),
 
-    # First convolution layer
+    # First feature detector
     tf.keras.layers.Conv2D(
         32,
-        (3, 3), # means it looks at 3 x 3 pixel area at a time to crossrefernce with what it has already learned
-        activation="relu" # Rectified Linear Unit
+        (3, 3),
+        activation="relu"
     ),
 
     tf.keras.layers.MaxPooling2D(),
 
-    # Second convolution layer
+    # Second feature detector
     tf.keras.layers.Conv2D(
         64,
         (3, 3),
@@ -110,7 +151,7 @@ model = tf.keras.Sequential([ # Sequential takes the output of one layer and fee
 
     tf.keras.layers.MaxPooling2D(),
 
-    # Third convolution layer
+    # Third feature detector
     tf.keras.layers.Conv2D(
         128,
         (3, 3),
@@ -119,16 +160,16 @@ model = tf.keras.Sequential([ # Sequential takes the output of one layer and fee
 
     tf.keras.layers.MaxPooling2D(),
 
-    # Turn the feature maps into a vector
+    # Convert feature maps into a vector
     tf.keras.layers.Flatten(),
 
-    # Fully connected layer
+    # Classification layer
     tf.keras.layers.Dense(
         128,
         activation="relu"
     ),
 
-    # Output layer
+    # Final prediction
     tf.keras.layers.Dense(
         NUM_CLASSES,
         activation="softmax"
@@ -137,13 +178,16 @@ model = tf.keras.Sequential([ # Sequential takes the output of one layer and fee
 
 
 # ============================================================
-# COMPILE MODEL
+# COMPILE
 # ============================================================
 
 model.compile(
+
     optimizer="adam",
 
-    loss="sparse_categorical_crossentropy",
+    loss=(
+        "sparse_categorical_crossentropy"
+    ),
 
     metrics=[
         "accuracy"
@@ -155,6 +199,8 @@ model.compile(
 # SHOW MODEL
 # ============================================================
 
+print("\nModel architecture:")
+
 model.summary()
 
 
@@ -162,9 +208,21 @@ model.summary()
 # TRAIN
 # ============================================================
 
-print("\nStarting training...\n")
+print(
+    "\n" +
+    "=" * 60
+)
+
+print(
+    "STARTING TRAINING"
+)
+
+print(
+    "=" * 60
+)
 
 history = model.fit(
+
     train_data,
 
     validation_data=validation_data,
@@ -182,6 +240,9 @@ model.save(
 )
 
 print(
-    f"\nModel saved to: "
-    f"{MODEL_PATH}"
+    f"\n[OK] Model saved to:"
+)
+
+print(
+    MODEL_PATH
 )

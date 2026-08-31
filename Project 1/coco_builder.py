@@ -17,39 +17,30 @@ from downloader import ensure_dataset_files
 # PATHS
 # ============================================================
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parent
 
-OUTPUT_DIR = SCRIPT_DIR / "dataset"
+DATASET_DIR = PROJECT_DIR / "dataset"
 
-ANNOTATIONS_DIR = OUTPUT_DIR / "annotations"
+ANNOTATIONS_DIR = DATASET_DIR / "annotations"
 
-RAW_DIR = OUTPUT_DIR / "raw"
+CLASSIFICATION_DIR = DATASET_DIR / "classification"
 
-FINAL_DIR = OUTPUT_DIR / "classification"
+TEMP_DIR = DATASET_DIR / "temp_coco_images"
 
 
 # ============================================================
-# CONFIGURATION
+# SETTINGS
 # ============================================================
 
-# Number of images to collect per class.
 MAX_IMAGES_PER_CLASS = 1000
 
-# Minimum object size in pixels.
-MIN_OBJECT_SIZE = 100
-
-# Minimum percentage of the original image
-# occupied by the object.
-MIN_OBJECT_AREA_RATIO = 0.02
-
-
-# Dataset split percentages.
 TRAIN_RATIO = 0.80
 VAL_RATIO = 0.10
 TEST_RATIO = 0.10
 
+MIN_OBJECT_SIZE = 100
+MIN_OBJECT_AREA_RATIO = 0.02
 
-# Make random selections reproducible.
 RANDOM_SEED = 42
 
 
@@ -70,20 +61,310 @@ COCO_CLASSES = {
 
 
 # ============================================================
-# COCO URLS
+# DATASET STATUS
 # ============================================================
 
-TRAIN_IMAGE_URL = (
-    "http://52.216.33.1/train2017/"
-    "{file_name}"
-)
+def get_class_images(class_name):
+    """
+    Find existing images for a class.
 
-VAL_IMAGE_URL = (
-    "http://52.216.33.1/val2017/"
-    "{file_name}"
-)
+    This checks the old flat structure:
+        classification/class_name/
 
-COCO_HOST_HEADER = "images.cocodataset.org"
+    It also checks the final split structure.
+    """
+
+    images = []
+
+    # Old/current structure
+    old_folder = CLASSIFICATION_DIR / class_name
+
+    if old_folder.exists():
+
+        images.extend(
+            old_folder.glob("*.jpg")
+        )
+
+        images.extend(
+            old_folder.glob("*.jpeg")
+        )
+
+        images.extend(
+            old_folder.glob("*.png")
+        )
+
+    # Final structure
+    for split in ["train", "val", "test"]:
+
+        folder = (
+            CLASSIFICATION_DIR
+            / split
+            / class_name
+        )
+
+        if folder.exists():
+
+            images.extend(
+                folder.glob("*.jpg")
+            )
+
+            images.extend(
+                folder.glob("*.jpeg")
+            )
+
+            images.extend(
+                folder.glob("*.png")
+            )
+
+    return images
+
+
+def count_class_images(class_name):
+
+    return len(
+        get_class_images(class_name)
+    )
+
+
+def print_dataset_status():
+
+    print("\nCurrent dataset:")
+
+    complete = True
+
+    for class_name in COCO_CLASSES.values():
+
+        count = count_class_images(
+            class_name
+        )
+
+        print(
+            f"  {class_name:<15}"
+            f"{count}/{MAX_IMAGES_PER_CLASS}"
+        )
+
+        if count < MAX_IMAGES_PER_CLASS:
+            complete = False
+
+    return complete
+
+
+def dataset_is_complete():
+
+    for class_name in COCO_CLASSES.values():
+
+        if (
+            count_class_images(class_name)
+            < MAX_IMAGES_PER_CLASS
+        ):
+
+            return False
+
+    return True
+
+
+def dataset_is_split():
+
+    """
+    Check whether the dataset has already
+    been divided into train/val/test.
+    """
+
+    for class_name in COCO_CLASSES.values():
+
+        for split in [
+            "train",
+            "val",
+            "test"
+        ]:
+
+            folder = (
+                CLASSIFICATION_DIR
+                / split
+                / class_name
+            )
+
+            if not folder.exists():
+                return False
+
+            if not any(
+                folder.iterdir()
+            ):
+                return False
+
+    return True
+
+
+# ============================================================
+# SPLIT EXISTING DATASET
+# ============================================================
+
+def split_existing_dataset():
+
+    """
+    Take the existing flat dataset:
+
+        classification/
+            backpack/
+            laptop/
+            ...
+
+    and split it into:
+
+        classification/
+            train/
+            val/
+            test/
+
+    Images are MOVED, not copied.
+    """
+
+    print(
+        "\n" +
+        "=" * 60
+    )
+
+    print(
+        "SPLITTING EXISTING DATASET"
+    )
+
+    print(
+        "=" * 60
+    )
+
+    random.seed(
+        RANDOM_SEED
+    )
+
+    for class_name in COCO_CLASSES.values():
+
+        source_folder = (
+            CLASSIFICATION_DIR
+            / class_name
+        )
+
+        if not source_folder.exists():
+
+            print(
+                f"[WARNING] "
+                f"{class_name} folder "
+                f"not found."
+            )
+
+            continue
+
+        images = []
+
+        images.extend(
+            source_folder.glob("*.jpg")
+        )
+
+        images.extend(
+            source_folder.glob("*.jpeg")
+        )
+
+        images.extend(
+            source_folder.glob("*.png")
+        )
+
+        if not images:
+
+            print(
+                f"[WARNING] "
+                f"No images found for "
+                f"{class_name}."
+            )
+
+            continue
+
+        random.shuffle(
+            images
+        )
+
+        # Only use the requested number.
+        images = images[
+            :MAX_IMAGES_PER_CLASS
+        ]
+
+        total = len(images)
+
+        train_count = int(
+            total * TRAIN_RATIO
+        )
+
+        val_count = int(
+            total * VAL_RATIO
+        )
+
+        train_images = images[
+            :train_count
+        ]
+
+        val_images = images[
+            train_count:
+            train_count + val_count
+        ]
+
+        test_images = images[
+            train_count + val_count:
+        ]
+
+        split_groups = {
+            "train": train_images,
+            "val": val_images,
+            "test": test_images,
+        }
+
+        for (
+            split_name,
+            split_images
+        ) in split_groups.items():
+
+            destination_folder = (
+                CLASSIFICATION_DIR
+                / split_name
+                / class_name
+            )
+
+            destination_folder.mkdir(
+                parents=True,
+                exist_ok=True
+            )
+
+            for image_path in split_images:
+
+                destination = (
+                    destination_folder
+                    / image_path.name
+                )
+
+                if destination.exists():
+                    continue
+
+                shutil.move(
+                    str(image_path),
+                    str(destination)
+                )
+
+        print(
+            f"[OK] {class_name}: "
+            f"{len(train_images)} train, "
+            f"{len(val_images)} val, "
+            f"{len(test_images)} test"
+        )
+
+        # Remove empty source folder.
+        try:
+
+            source_folder.rmdir()
+
+        except OSError:
+
+            pass
+
+    print(
+        "\n[OK] Existing dataset split."
+    )
 
 
 # ============================================================
@@ -91,72 +372,68 @@ COCO_HOST_HEADER = "images.cocodataset.org"
 # ============================================================
 
 def extract_annotations():
-    """
-    Extract the required COCO annotation JSON files.
-    """
 
     annotation_zip = (
-        ANNOTATIONS_DIR /
-        "annotations_trainval2017.zip"
+        ANNOTATIONS_DIR
+        / "annotations_trainval2017.zip"
     )
 
     train_json = (
-        ANNOTATIONS_DIR /
-        "instances_train2017.json"
+        ANNOTATIONS_DIR
+        / "instances_train2017.json"
     )
 
     val_json = (
-        ANNOTATIONS_DIR /
-        "instances_val2017.json"
+        ANNOTATIONS_DIR
+        / "instances_val2017.json"
     )
 
-    # If both files already exist,
-    # there is nothing to do.
     if (
         train_json.exists()
         and val_json.exists()
     ):
-        print(
-            "[OK] Annotation files "
-            "already extracted."
-        )
 
         return train_json, val_json
 
+    if not annotation_zip.exists():
+
+        print(
+            "[ERROR] COCO annotation ZIP "
+            "not found."
+        )
+
+        return None, None
+
     print(
-        "\nExtracting annotation files..."
+        "\nExtracting COCO annotations..."
     )
 
     with zipfile.ZipFile(
         annotation_zip,
         "r"
-    ) as zip_file:
+    ) as archive:
 
-        for member in zip_file.namelist():
+        for member in archive.namelist():
 
             if (
                 member.endswith(
                     "instances_train2017.json"
                 )
-                or member.endswith(
+                or
+                member.endswith(
                     "instances_val2017.json"
                 )
             ):
 
                 target = (
-                    ANNOTATIONS_DIR /
-                    Path(member).name
+                    ANNOTATIONS_DIR
+                    / Path(member).name
                 )
 
                 if target.exists():
                     continue
 
-                print(
-                    f"Extracting "
-                    f"{target.name}..."
-                )
-
-                with zip_file.open(
+                with archive.open(
                     member
                 ) as source:
 
@@ -174,206 +451,80 @@ def extract_annotations():
 
 
 # ============================================================
-# LOAD COCO DATA
-# ============================================================
-
-def load_coco_annotations(
-    json_path
-):
-
-    print(
-        f"Loading "
-        f"{json_path.name}..."
-    )
-
-    with open(
-        json_path,
-        "r",
-        encoding="utf-8"
-    ) as file:
-
-        return json.load(file)
-
-
-def build_image_lookup(
-    data
-):
-
-    return {
-        image["id"]: image
-        for image in data["images"]
-    }
-
-
-def group_annotations_by_category(
-    data
-):
-
-    category_lookup = {
-        category["id"]:
-        category["name"]
-
-        for category in
-        data["categories"]
-    }
-
-    grouped = defaultdict(list)
-
-    for annotation in data["annotations"]:
-
-        category_name = (
-            category_lookup[
-                annotation["category_id"]
-            ]
-        )
-
-        if category_name in COCO_CLASSES:
-
-            grouped[
-                category_name
-            ].append(
-                annotation
-            )
-
-    return grouped
-
-
-# ============================================================
-# IMAGE DOWNLOAD
+# COCO DOWNLOAD
 # ============================================================
 
 def download_image(
     image_info,
     split
 ):
-    """
-    Download one COCO image to a temporary file.
 
-    The image is deleted after its crop
-    is successfully processed.
-    """
-
-    temp_dir = (
-        OUTPUT_DIR /
-        "temp_coco_images"
-    )
-
-    temp_dir.mkdir(
+    TEMP_DIR.mkdir(
         parents=True,
         exist_ok=True
     )
 
-    file_name = (
-        image_info["file_name"]
-    )
+    file_name = image_info["file_name"]
 
     image_path = (
-        temp_dir /
-        file_name
+        TEMP_DIR
+        / file_name
     )
-
-    if image_path.exists() and image_path.stat().st_size > 0:
-
-        return image_path
 
     if image_path.exists():
 
-        image_path.unlink()
+        return image_path
 
     if split == "train":
 
         url = (
-            TRAIN_IMAGE_URL.format(
-                file_name=file_name
-            )
+            "http://images.cocodataset.org/"
+            f"train2017/{file_name}"
         )
 
     else:
 
         url = (
-            VAL_IMAGE_URL.format(
-                file_name=file_name
-            )
+            "http://images.cocodataset.org/"
+            f"val2017/{file_name}"
         )
 
     try:
 
-        partial_path = image_path.with_suffix(
-            image_path.suffix + ".part"
+        response = requests.get(
+            url,
+            stream=True,
+            timeout=60
         )
 
-        with requests.Session() as session:
+        response.raise_for_status()
 
-            session.trust_env = False
+        with open(
+            image_path,
+            "wb"
+        ) as file:
 
-            with session.get(
-                url,
-                headers={
-                    "Host": COCO_HOST_HEADER
-                },
-                stream=True,
-                timeout=(10, 30)
-            ) as response:
+            for chunk in response.iter_content(
+                chunk_size=1024 * 1024
+            ):
 
-                response.raise_for_status()
-
-                with open(
-                    partial_path,
-                    "wb"
-                ) as file:
-
-                    for chunk in response.iter_content(
-                        chunk_size=1024 * 1024
-                    ):
-
-                        if chunk:
-
-                            file.write(chunk)
-
-        for attempt in range(5):
-
-            try:
-
-                partial_path.replace(image_path)
-
-                break
-
-            except PermissionError:
-
-                if attempt == 4:
-
-                    raise
-
-                time.sleep(0.2)
+                if chunk:
+                    file.write(chunk)
 
         return image_path
 
     except Exception as error:
 
-        if "partial_path" in locals() and partial_path.exists():
-
-            try:
-
-                partial_path.unlink()
-
-            except PermissionError:
-
-                pass
-
-        if image_path.exists() and image_path.stat().st_size == 0:
-
-            image_path.unlink()
-
         print(
-            f"Failed to download "
-            f"{file_name}: {error}"
+            f"\nDownload failed: "
+            f"{error}"
         )
 
         return None
 
 
 # ============================================================
-# IMAGE CROPPING
+# CROP
 # ============================================================
 
 def crop_object(
@@ -400,37 +551,29 @@ def crop_object(
                 annotation["bbox"]
             )
 
-            # Ignore very small objects.
-            if width < MIN_OBJECT_SIZE:
+            if (
+                width < MIN_OBJECT_SIZE
+                or height < MIN_OBJECT_SIZE
+            ):
+
                 return False
 
-            if height < MIN_OBJECT_SIZE:
-                return False
-
-            # Check how much of the image
-            # the object occupies.
             image_area = (
-                image_width *
-                image_height
+                image_width
+                * image_height
             )
 
             object_area = (
-                width *
-                height
-            )
-
-            area_ratio = (
-                object_area /
-                image_area
+                width * height
             )
 
             if (
-                area_ratio <
-                MIN_OBJECT_AREA_RATIO
+                object_area / image_area
+                < MIN_OBJECT_AREA_RATIO
             ):
+
                 return False
 
-            # Calculate crop coordinates.
             left = max(
                 0,
                 int(x)
@@ -451,10 +594,11 @@ def crop_object(
                 int(y + height)
             )
 
-            if right <= left:
-                return False
+            if (
+                right <= left
+                or bottom <= top
+            ):
 
-            if bottom <= top:
                 return False
 
             crop = image.crop(
@@ -479,91 +623,54 @@ def crop_object(
 
             return True
 
-    except Exception as error:
-
-        print(
-            f"Crop failed: "
-            f"{error}"
-        )
+    except Exception:
 
         return False
 
 
 # ============================================================
-# COLLECT ONE CLASS
+# COLLECT MISSING IMAGES
 # ============================================================
 
-def collect_class_images(
-    output_class,
+def collect_missing_images(
+    class_name,
     annotations,
     image_lookup,
-    split
+    split,
+    needed
 ):
 
-    class_dir = (
-        RAW_DIR /
-        output_class
+    if needed <= 0:
+        return 0
+
+    output_folder = (
+        CLASSIFICATION_DIR
+        / split
+        / class_name
     )
 
-    class_dir.mkdir(
+    output_folder.mkdir(
         parents=True,
         exist_ok=True
     )
-
-    # Check how many images already exist.
-    existing_images = list(
-        class_dir.glob(
-            "*.jpg"
-        )
-    )
-
-    saved_count = len(
-        existing_images
-    )
-
-    # If the class is already complete,
-    # skip it.
-    if (
-        saved_count >=
-        MAX_IMAGES_PER_CLASS
-    ):
-
-        print(
-            f"[OK] "
-            f"{output_class} "
-            f"already has "
-            f"{saved_count} images."
-        )
-
-        return
 
     random.shuffle(
         annotations
     )
 
-    progress = tqdm(
+    saved = 0
+
+    for annotation in tqdm(
         annotations,
-        desc=(
-            f"Collecting "
-            f"{output_class}"
-        )
-    )
+        desc=f"{class_name} [{split}]"
+    ):
 
-    for annotation in progress:
-
-        if (
-            saved_count >=
-            MAX_IMAGES_PER_CLASS
-        ):
+        if saved >= needed:
             break
-
-        image_id = (
-            annotation["image_id"]
-        )
 
         image_info = (
             image_lookup.get(
-                image_id
+                annotation["image_id"]
             )
         )
 
@@ -571,35 +678,22 @@ def collect_class_images(
             continue
 
         output_file = (
-            class_dir /
-            f"{split}_"
-            f"{image_id}_"
-            f"{annotation['id']}.jpg"
-        )
-
-        # Don't recreate an existing crop.
-        if output_file.exists():
-
-            continue
-
-        _, _, width, height = annotation["bbox"]
-
-        if (
-            width < MIN_OBJECT_SIZE
-            or height < MIN_OBJECT_SIZE
-        ):
-
-            continue
-
-        image_path = (
-            download_image(
-                image_info,
-                split
+            output_folder
+            / (
+                f"{annotation['image_id']}_"
+                f"{annotation['id']}.jpg"
             )
         )
 
-        if image_path is None:
+        if output_file.exists():
+            continue
 
+        image_path = download_image(
+            image_info,
+            split
+        )
+
+        if image_path is None:
             continue
 
         success = crop_object(
@@ -608,254 +702,90 @@ def collect_class_images(
             output_file
         )
 
-        if success:
-
-            saved_count += 1
-
-        # IMPORTANT:
-        # Delete the original COCO image
-        # after the crop is finished.
         try:
 
             if image_path.exists():
-
                 image_path.unlink()
 
-        except Exception as error:
+        except Exception:
+            pass
 
-            print(
-                f"Could not delete "
-                f"temporary image: "
-                f"{error}"
-            )
+        if success:
+            saved += 1
 
-        progress.set_postfix(
-            saved=saved_count
-        )
-
-    print(
-        f"\n{output_class}: "
-        f"{saved_count} images"
-    )
+    return saved
 
 
 # ============================================================
-# SPLIT DATASET
-# ============================================================
-
-def split_dataset():
-    """
-    Move images into train,
-    validation, and test folders.
-
-    Files are MOVED instead of copied
-    to avoid storing duplicates.
-    """
-
-    print(
-        "\nSplitting dataset..."
-    )
-
-    random.seed(
-        RANDOM_SEED
-    )
-
-    for class_folder in (
-        RAW_DIR.iterdir()
-    ):
-
-        if not class_folder.is_dir():
-            continue
-
-        images = list(
-            class_folder.glob(
-                "*.jpg"
-            )
-        )
-
-        random.shuffle(
-            images
-        )
-
-        total = len(images)
-
-        train_end = int(
-            total *
-            TRAIN_RATIO
-        )
-
-        val_end = (
-            train_end +
-            int(
-                total *
-                VAL_RATIO
-            )
-        )
-
-        split_groups = {
-            "train":
-                images[:train_end],
-
-            "val":
-                images[
-                    train_end:
-                    val_end
-                ],
-
-            "test":
-                images[
-                    val_end:
-                ],
-        }
-
-        for (
-            split_name,
-            split_images
-        ) in split_groups.items():
-
-            destination_dir = (
-                FINAL_DIR /
-                split_name /
-                class_folder.name
-            )
-
-            destination_dir.mkdir(
-                parents=True,
-                exist_ok=True
-            )
-
-            for image_path in split_images:
-
-                destination = (
-                    destination_dir /
-                    image_path.name
-                )
-
-                # Move instead of copy.
-                shutil.move(
-                    str(image_path),
-                    str(destination)
-                )
-
-        print(
-            f"[OK] "
-            f"{class_folder.name}: "
-            f"{total} images split"
-        )
-
-    # Remove empty raw folders.
-    try:
-
-        if RAW_DIR.exists():
-
-            shutil.rmtree(
-                RAW_DIR
-            )
-
-            print(
-                "[OK] Removed raw folder."
-            )
-
-    except Exception as error:
-
-        print(
-            f"Could not remove "
-            f"raw folder: {error}"
-        )
-
-
-# ============================================================
-# CLEANUP
-# ============================================================
-
-def cleanup_temp_images():
-
-    temp_dir = (
-        OUTPUT_DIR /
-        "temp_coco_images"
-    )
-
-    if temp_dir.exists():
-
-        try:
-
-            shutil.rmtree(
-                temp_dir
-            )
-
-            print(
-                "[OK] Temporary COCO "
-                "images deleted."
-            )
-
-        except Exception as error:
-
-            print(
-                f"Could not delete "
-                f"temporary folder: "
-                f"{error}"
-            )
-
-
-# ============================================================
-# MAIN
+# BUILD DATASET
 # ============================================================
 
 def build_coco_dataset():
-   # --------------------------------------------------------
-    # CHECK IF DATASET IS ALREADY COMPLETE
+
+    print(
+        "\n" +
+        "=" * 60
+    )
+
+    print(
+        "COCO DATASET CHECK"
+    )
+
+    print(
+        "=" * 60
+    )
+
+    complete = print_dataset_status()
+
+    # --------------------------------------------------------
+    # DATASET EXISTS BUT IS NOT SPLIT
     # --------------------------------------------------------
 
-    if dataset_is_complete():
+    if complete and not dataset_is_split():
 
         print(
-            "\n" +
-            "=" * 60
+            "\n[OK] You already have all "
+            "8,000 images."
         )
 
         print(
-            "COCO DATASET ALREADY COMPLETE"
+            "No downloads are necessary."
+        )
+
+        split_existing_dataset()
+
+        print_dataset_status()
+
+        return
+
+    # --------------------------------------------------------
+    # DATASET ALREADY COMPLETELY SPLIT
+    # --------------------------------------------------------
+
+    if complete and dataset_is_split():
+
+        print(
+            "\n[OK] Dataset is already "
+            "complete and organized."
         )
 
         print(
-            "=" * 60
-        )
-
-        print(
-            f"\nLocation:"
-        )
-
-        print(
-            FINAL_DIR
+            "No downloads are necessary."
         )
 
         return
 
-    random.seed(
-        RANDOM_SEED
+    # --------------------------------------------------------
+    # SOME DATA IS MISSING
+    # --------------------------------------------------------
+
+    print(
+        "\n[INFO] Some images are missing."
     )
 
     print(
-        "\nCOCO CLASSIFICATION "
-        "DATASET BUILDER"
+        "Existing images will be kept."
     )
-
-    print(
-        "\nClasses:"
-    )
-
-    for class_name in (
-        COCO_CLASSES.values()
-    ):
-
-        print(
-            f"  - {class_name}"
-        )
-
-    # --------------------------------------------------------
-    # STEP 1:
-    # CHECK/DOWNLOAD REQUIRED FILES
-    # --------------------------------------------------------
 
     downloads_complete = (
         ensure_dataset_files()
@@ -864,101 +794,126 @@ def build_coco_dataset():
     if not downloads_complete:
 
         print(
-            "\nDownloads are not complete."
-        )
-
-        print(
-            "Run the program again "
-            "to resume."
+            "\n[ERROR] Required files "
+            "are not available."
         )
 
         return
 
+    train_json, val_json = (
+        extract_annotations()
+    )
+
+    if (
+        train_json is None
+        or val_json is None
+    ):
+
+        return
+
     # --------------------------------------------------------
-    # STEP 2:
-    # EXTRACT ANNOTATIONS
+    # COLLECT MISSING DATA
     # --------------------------------------------------------
 
-    (
-        train_json,
-        val_json
-    ) = extract_annotations()
+    for split, json_path in [
+        ("train", train_json),
+        ("val", val_json)
+    ]:
 
-    # --------------------------------------------------------
-    # STEP 3:
-    # LOAD AND PROCESS DATA
-    # --------------------------------------------------------
+        with open(
+            json_path,
+            "r",
+            encoding="utf-8"
+        ) as file:
 
-    datasets = [
-        (
-            "train",
-            train_json
-        ),
-        (
-            "val",
-            val_json
-        ),
-    ]
+            data = json.load(file)
 
-    for (
-        split,
-        json_path
-    ) in datasets:
+        image_lookup = {
+            image["id"]: image
+            for image in data["images"]
+        }
 
-        data = (
-            load_coco_annotations(
-                json_path
-            )
-        )
-
-        image_lookup = (
-            build_image_lookup(
-                data
-            )
-        )
+        category_lookup = {
+            category["id"]:
+            category["name"]
+            for category in data["categories"]
+        }
 
         annotations_by_category = (
-            group_annotations_by_category(
-                data
-            )
+            defaultdict(list)
         )
 
+        for annotation in data["annotations"]:
+
+            category_name = (
+                category_lookup.get(
+                    annotation["category_id"]
+                )
+            )
+
+            if category_name in COCO_CLASSES:
+
+                annotations_by_category[
+                    category_name
+                ].append(annotation)
+
         for (
-            coco_class_name,
-            output_class
+            coco_name,
+            class_name
         ) in COCO_CLASSES.items():
 
-            annotations = (
-                annotations_by_category[
-                    coco_class_name
-                ]
+            current_count = (
+                count_class_images(
+                    class_name
+                )
             )
+
+            needed = (
+                MAX_IMAGES_PER_CLASS
+                - current_count
+            )
+
+            if needed <= 0:
+                continue
 
             print(
-                f"\nProcessing "
-                f"{output_class}..."
+                f"\n{class_name}: "
+                f"{current_count}/"
+                f"{MAX_IMAGES_PER_CLASS}"
             )
 
-            collect_class_images(
-                output_class,
-                annotations,
+            collect_missing_images(
+                class_name,
+                annotations_by_category[
+                    coco_name
+                ],
                 image_lookup,
-                split
+                split,
+                needed
             )
 
     # --------------------------------------------------------
-    # STEP 4:
-    # SPLIT DATASET
+    # SPLIT
     # --------------------------------------------------------
 
-    split_dataset()
+    if dataset_is_complete():
+
+        split_existing_dataset()
 
     # --------------------------------------------------------
-    # STEP 5:
-    # CLEANUP TEMPORARY FILES
+    # CLEANUP
     # --------------------------------------------------------
 
-    cleanup_temp_images()
+    if TEMP_DIR.exists():
+
+        try:
+            shutil.rmtree(TEMP_DIR)
+        except Exception:
+            pass
+
+    # --------------------------------------------------------
+    # FINAL STATUS
+    # --------------------------------------------------------
 
     print(
         "\n" +
@@ -966,73 +921,19 @@ def build_coco_dataset():
     )
 
     print(
-        "COCO DATASET BUILD COMPLETE"
+        "FINAL DATASET STATUS"
     )
 
     print(
         "=" * 60
     )
 
-    print(
-        "\nFinal dataset:"
-    )
-
-    print(
-        FINAL_DIR
-    )
+    print_dataset_status()
 
 
 # ============================================================
 # RUN DIRECTLY
 # ============================================================
-
-def dataset_is_complete():
-    """
-    Check whether every class has the expected
-    number of images in the final dataset.
-    """
-
-    if not FINAL_DIR.exists():
-        return False
-
-    for class_name in COCO_CLASSES.values():
-
-        total_images = 0
-
-        for split_name in [
-            "train",
-            "val",
-            "test"
-        ]:
-
-            class_dir = (
-                FINAL_DIR /
-                split_name /
-                class_name
-            )
-
-            if class_dir.exists():
-
-                total_images += len(
-                    list(
-                        class_dir.glob(
-                            "*.jpg"
-                        )
-                    )
-                )
-
-        if total_images < MAX_IMAGES_PER_CLASS:
-
-            print(
-                f"[INCOMPLETE] "
-                f"{class_name}: "
-                f"{total_images}/"
-                f"{MAX_IMAGES_PER_CLASS}"
-            )
-
-            return False
-
-    return True
 
 if __name__ == "__main__":
 
