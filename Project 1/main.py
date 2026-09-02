@@ -220,6 +220,57 @@ print(
 print(
     "=" * 60
 )
+# ============================================================
+# TRAINING CALLBACKS
+# ============================================================
+
+# Save the model whenever validation accuracy improves.
+best_model_callback = tf.keras.callbacks.ModelCheckpoint(
+    MODEL_PATH,
+    monitor="val_accuracy",
+    mode="max",
+    save_best_only=True,
+    verbose=1
+)
+
+# Stop training if validation accuracy stops improving.
+early_stopping_callback = tf.keras.callbacks.EarlyStopping(
+    monitor="val_accuracy",
+    mode="max",
+    patience=3,
+    restore_best_weights=True,
+    verbose=1
+)
+
+
+# ============================================================
+# TRAIN
+# ============================================================
+
+print(
+    "\n" +
+    "=" * 60
+)
+
+print("STARTING TRAINING")
+
+print(
+    "=" * 60
+)
+
+# ============================================================
+# SAVE BEST MODEL
+# ============================================================
+
+model.save(MODEL_PATH)
+
+print(
+    f"\n[OK] Best model saved to:"
+)
+
+print(
+    MODEL_PATH
+)
 
 history = model.fit(
 
