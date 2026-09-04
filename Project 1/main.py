@@ -1,6 +1,30 @@
+from pathlib import Path
 import tensorflow as tf
 
 from coco_builder import build_coco_dataset
+
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+#
+# __file__ is the location of main.py.
+# Using it means the program finds the dataset relative to
+# the project, regardless of which folder PowerShell is in.
+#
+# ============================================================
+
+PROJECT_DIR = Path(__file__).resolve().parent
+
+DATASET_DIR = PROJECT_DIR / "dataset"
+
+TRAIN_DIR = DATASET_DIR / "classification" / "train"
+
+VAL_DIR = DATASET_DIR / "classification" / "val"
+
+TEST_DIR = DATASET_DIR / "classification" / "test"
+
+MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
 
 
 # ============================================================
