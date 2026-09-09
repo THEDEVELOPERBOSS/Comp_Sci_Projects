@@ -266,21 +266,45 @@ model = tf.keras.Sequential([
 
     tf.keras.layers.MaxPooling2D(),
 
-    # Convert feature maps into a vector
-    tf.keras.layers.Flatten(),
+# Convert feature maps into a vector
+tf.keras.layers.Flatten(),
 
-    # Classification layer
-    tf.keras.layers.Dense(
-        128,
-        activation="relu"
-    ),
+# Classification layer
+tf.keras.layers.Dense(
+    128,
+    activation="relu"
+),
 
-    # Final prediction
-    tf.keras.layers.Dense(
-        NUM_CLASSES,
-        activation="softmax"
-    )
-])
+# ========================================================
+# DROPOUT
+# ========================================================
+#
+# Dropout helps prevent overfitting.
+#
+# During training, it temporarily disables a random
+# percentage of neurons in the previous layer.
+#
+# With 0.5, approximately 50% of those neurons are
+# temporarily ignored during each training step.
+#
+# This forces the network to learn using multiple useful
+# features instead of depending too heavily on specific
+# neurons.
+#
+# Dropout is only active during training. When the model
+# is tested, all neurons are used normally.
+#
+# ========================================================
+
+tf.keras.layers.Dropout(
+    0.5
+),
+
+# Final prediction
+tf.keras.layers.Dense(
+    NUM_CLASSES,
+    activation="softmax"
+)
 
 
 # ============================================================
