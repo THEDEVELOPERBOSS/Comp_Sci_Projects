@@ -306,6 +306,8 @@ tf.keras.layers.Dense(
     activation="softmax"
 )
 
+])
+
 
 # ============================================================
 # COMPILE
