@@ -2,3 +2,4 @@ tensorflow
 requests
 tqdm
 Pillow
+pick

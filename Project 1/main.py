@@ -479,6 +479,11 @@ print(
     f"{test_accuracy * 100:.2f}%"
 )
 def main():
-    print(f"Best run: ") 
+    
+    # Top scores 
+    print(f"Best run: ")
+    
+    # Current settings
     print(f"Here are you current settings:")
-    user_input = input("")
+    resolution_input = input("What resolution do you want? \n")
+    print()
