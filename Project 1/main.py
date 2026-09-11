@@ -1,6 +1,30 @@
+from pathlib import Path
 import tensorflow as tf
 
 from coco_builder import build_coco_dataset
+
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+#
+# __file__ is the location of main.py.
+# Using it means the program finds the dataset relative to
+# the project, regardless of which folder PowerShell is in.
+#
+# ============================================================
+
+PROJECT_DIR = Path(__file__).resolve().parent
+
+DATASET_DIR = PROJECT_DIR / "dataset"
+
+TRAIN_DIR = DATASET_DIR / "classification" / "train"
+
+VAL_DIR = DATASET_DIR / "classification" / "val"
+
+TEST_DIR = DATASET_DIR / "classification" / "test"
+
+MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
 
 
 # ============================================================
@@ -50,15 +74,6 @@ BATCH_SIZE = 32
 #
 # ========================================================
 EPOCHS = 30
-
-TRAIN_DIR = "dataset/classification/train"
-
-VAL_DIR = "dataset/classification/val"
-
-TEST_DIR = "dataset/classification/test"
-
-MODEL_PATH = "image_classifier.keras"
-
 
 # ============================================================
 # BUILD / CHECK DATASET
@@ -235,27 +250,55 @@ model = tf.keras.Sequential([
 
     # Third feature detector
     tf.keras.layers.Conv2D(
-        128,
+        128, # number of filters
         (3, 3),
         activation="relu"
     ),
 
     tf.keras.layers.MaxPooling2D(),
 
-    # Convert feature maps into a vector
-    tf.keras.layers.Flatten(),
+# Convert feature maps into a vector
+tf.keras.layers.Flatten(),
 
-    # Classification layer
-    tf.keras.layers.Dense(
-        128,
-        activation="relu"
-    ),
+# Classification layer
+tf.keras.layers.Dense(
+    128, # number of neurons
+    activation="relu"
+),
 
-    # Final prediction
-    tf.keras.layers.Dense(
-        NUM_CLASSES,
-        activation="softmax"
-    )
+# ========================================================
+# DROPOUT
+# ========================================================
+#
+# Dropout helps prevent overfitting.
+#
+# During training, it temporarily disables a random
+# percentage of neurons in the previous layer.
+#
+# With 0.5, approximately 50% of those neurons are
+# temporarily ignored during each training step.
+#
+# This forces the network to learn using multiple useful
+# features instead of depending too heavily on specific
+# neurons.
+#
+# Dropout is only active during training. When the model
+# is tested, all neurons are used normally.
+#
+# Currently removed due to harming performance as of removing it
+#
+# ========================================================
+
+# tf.keras.layers.Dropout(
+#    0.5
+#),
+
+# Final prediction
+tf.keras.layers.Dense(
+     NUM_CLASSES,
+    activation="softmax"
+)
+
 ])
 
 
@@ -286,22 +329,7 @@ print("\nModel architecture:")
 model.summary()
 
 
-# ============================================================
-# TRAIN
-# ============================================================
 
-print(
-    "\n" +
-    "=" * 60
-)
-
-print(
-    "STARTING TRAINING"
-)
-
-print(
-    "=" * 60
-)
 # ============================================================
 # TRAINING CALLBACKS
 # ============================================================
@@ -394,29 +422,18 @@ print(
     "=" * 60
 )
 
-# ============================================================
-# SAVE BEST MODEL
-# ============================================================
-
-model.save(MODEL_PATH)
-
-print(
-    f"\n[OK] Best model saved to:"
-)
-
-print(
-    MODEL_PATH
-)
-
 history = model.fit(
-
     train_data,
-
     validation_data=validation_data,
-
-    epochs=EPOCHS
+    epochs=EPOCHS,
+    callbacks=[
+        best_model_callback,
+        early_stopping_callback
+    ]
 )
 
+print("\n[OK] Best model saved to:")
+print(MODEL_PATH)
 # ============================================================
 # TEST MODEL
 # ============================================================
