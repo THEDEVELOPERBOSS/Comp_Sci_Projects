@@ -1,9 +1,11 @@
+# ============================================================
+# Imports 
+# ============================================================
 from pathlib import Path
 import tensorflow as tf
 import time
-
+from pick import pick
 from coco_builder import build_coco_dataset
-
 
 # ============================================================
 # PROJECT PATHS
@@ -58,7 +60,7 @@ MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
 # and compare the accuracy and training time.
 #
 # ========================================================
-IMAGE_SIZE = (160, 160) # Change this to change image size
+IMAGE_SIZE = (160, 160)
 
 BATCH_SIZE = 32
 # ========================================================
@@ -83,228 +85,230 @@ EPOCHS = 30
 # ============================================================
 # BUILD / CHECK DATASET
 # ============================================================
-
-build_coco_dataset()
+def build_coco_dataset():
+    
+    build_coco_dataset()
 
 
 # ============================================================
 # LOAD TRAINING DATA
 # ============================================================
+def load_training_data():
+    print("\nLoading training data...")
 
-print("\nLoading training data...")
+    train_data = (
+        tf.keras.utils.image_dataset_from_directory(
+            TRAIN_DIR,
 
-train_data = (
-    tf.keras.utils.image_dataset_from_directory(
-        TRAIN_DIR,
+            image_size=IMAGE_SIZE,
 
-        image_size=IMAGE_SIZE,
+            batch_size=BATCH_SIZE,
 
-        batch_size=BATCH_SIZE,
+            label_mode="int",
 
-        label_mode="int",
+            shuffle=True,
 
-        shuffle=True,
-
-        seed=42
+            seed=42
+        )
     )
-)
 
 
 # ============================================================
 # LOAD VALIDATION DATA
 # ============================================================
 
-print("\nLoading validation data...")
+def load_validation_data():
+    print("\nLoading validation data...")
 
-validation_data = (
-    tf.keras.utils.image_dataset_from_directory(
-        VAL_DIR,
+    validation_data = (
+        tf.keras.utils.image_dataset_from_directory(
+            VAL_DIR,
 
-        image_size=IMAGE_SIZE,
+            image_size=IMAGE_SIZE,
 
-        batch_size=BATCH_SIZE,
+            batch_size=BATCH_SIZE,
 
-        label_mode="int",
+            label_mode="int",
 
-        shuffle=False
+            shuffle=False
+        )
     )
-)
 
 
 # ============================================================
-# GET CLASS NAMES
+# GET CLASS NAMES AND SPEED UP DATA PIPELINE(PREPARE DATA)
 # ============================================================
+def prepare_data():
+    class_names = (
+        train_data.class_names
+    )
 
-class_names = (
-    train_data.class_names
-)
+    NUM_CLASSES = len(
+        class_names
+    )
 
-NUM_CLASSES = len(
-    class_names
-)
+    print("\nClasses:")
 
-print("\nClasses:")
+    for i, class_name in enumerate(
+        class_names
+    ):
 
-for i, class_name in enumerate(
-    class_names
-):
+        print(
+            f"  {i}: {class_name}"
+        )
 
     print(
-        f"  {i}: {class_name}"
+        f"\nNumber of classes: "
+        f"{NUM_CLASSES}"
     )
 
-print(
-    f"\nNumber of classes: "
-    f"{NUM_CLASSES}"
-)
 
+    # ============================================================
+    # speed up data pipeline
+    # ============================================================
 
-# ============================================================
-# SPEED UP DATA PIPELINE
-# ============================================================
-
-AUTOTUNE = (
-    tf.data.AUTOTUNE
-)
-
-train_data = (
-    train_data.prefetch(
-        buffer_size=AUTOTUNE
+    AUTOTUNE = (
+        tf.data.AUTOTUNE
     )
-)
 
-validation_data = (
-    validation_data.prefetch(
-        buffer_size=AUTOTUNE
+    train_data = (
+        train_data.prefetch(
+            buffer_size=AUTOTUNE
+        )
     )
-)
 
+    validation_data = (
+        validation_data.prefetch(
+            buffer_size=AUTOTUNE
+        )
+    )
 
-model = tf.keras.Sequential([
+def build_model():
+    model = tf.keras.Sequential([
 
-# ========================================================
-# DATA AUGMENTATION
-# ========================================================
-#
-# Data augmentation creates slightly different versions
-# of training images.
-#
-# This helps prevent the CNN from simply memorizing the
-# exact training images. Instead, it learns important
-# features that help identify each object.
-#
-# For example, if the model sees a backpack from one angle,
-# we want it to still recognize a backpack from a slightly
-# different angle or position.
-#
-# RandomFlip:
-# Randomly flips some training images horizontally.
-#
-# RandomRotation:
-# Slightly rotates some training images.
-# The value 0.1 allows a small amount of rotation.
-#
-# RandomZoom:
-# Slightly zooms some training images in or out.
-#
-# These changes happen automatically during training.
-# The original images stored on the computer are NOT changed.
-#
-# Data augmentation is only used on training data.
-# Validation and test images remain unchanged.
-#
-# The goal is to make the model better at recognizing
-# objects it has never seen before.
-#
-# ========================================================
+    # ========================================================
+    # DATA AUGMENTATION
+    # ========================================================
+    #
+    # Data augmentation creates slightly different versions
+    # of training images.
+    #
+    # This helps prevent the CNN from simply memorizing the
+    # exact training images. Instead, it learns important
+    # features that help identify each object.
+    #
+    # For example, if the model sees a backpack from one angle,
+    # we want it to still recognize a backpack from a slightly
+    # different angle or position.
+    #
+    # RandomFlip:
+    # Randomly flips some training images horizontally.
+    #
+    # RandomRotation:
+    # Slightly rotates some training images.
+    # The value 0.1 allows a small amount of rotation.
+    #
+    # RandomZoom:
+    # Slightly zooms some training images in or out.
+    #
+    # These changes happen automatically during training.
+    # The original images stored on the computer are NOT changed.
+    #
+    # Data augmentation is only used on training data.
+    # Validation and test images remain unchanged.
+    #
+    # The goal is to make the model better at recognizing
+    # objects it has never seen before.
+    #
+    # ========================================================
+        tf.keras.layers.RandomFlip(
+            "horizontal"
+        ),
 
-    tf.keras.layers.RandomFlip(
-        "horizontal"
-    ),
+        tf.keras.layers.RandomRotation(
+            0.1
+        ),
 
-    tf.keras.layers.RandomRotation(
-        0.1
-    ),
+        tf.keras.layers.RandomZoom(
+            0.1
+        ),
 
-    tf.keras.layers.RandomZoom(
-        0.1
-    ),
+        # Normalize pixels from 0-255 to 0-1
+        tf.keras.layers.Rescaling(
+            1.0 / 255
+        ),
 
-    # Normalize pixels from 0-255 to 0-1
-    tf.keras.layers.Rescaling(
-        1.0 / 255
-    ),
+        # First feature detector
+        tf.keras.layers.Conv2D(
+            32,
+            (3, 3),
+            activation="relu"
+        ),
 
-    # First feature detector
-    tf.keras.layers.Conv2D(
-        32,
-        (3, 3),
+        tf.keras.layers.MaxPooling2D(),
+
+        # Second feature detector
+        tf.keras.layers.Conv2D(
+            64,
+            (3, 3),
+            activation="relu"
+        ),
+
+        tf.keras.layers.MaxPooling2D(),
+
+        # Third feature detector
+        tf.keras.layers.Conv2D(
+            128, # number of filters
+            (3, 3),
+            activation="relu"
+        ),
+
+        tf.keras.layers.MaxPooling2D(),
+
+    # Convert feature maps into a vector
+    tf.keras.layers.Flatten(),
+
+    # Classification layer
+    tf.keras.layers.Dense(
+        128, # number of neurons
         activation="relu"
     ),
+    
+    def dropout():
+        # ========================================================
+        # DROPOUT
+        # ========================================================
+        #
+        # Dropout helps prevent overfitting.
+        #
+        # During training, it temporarily disables a random
+        # percentage of neurons in the previous layer.
+        #
+        # With 0.5, approximately 50% of those neurons are
+        # temporarily ignored during each training step.
+        #
+        # This forces the network to learn using multiple useful
+        # features instead of depending too heavily on specific
+        # neurons.
+        #
+        # Dropout is only active during training. When the model
+        # is tested, all neurons are used normally.
+        #
+        # Currently removed due to harming performance as of removing it
+        #
+        # ========================================================
 
-    tf.keras.layers.MaxPooling2D(),
+        # tf.keras.layers.Dropout(
+        #    0.5
+        #),
 
-    # Second feature detector
-    tf.keras.layers.Conv2D(
-        64,
-        (3, 3),
-        activation="relu"
-    ),
+    # Final prediction
+    tf.keras.layers.Dense(
+        NUM_CLASSES,
+        activation="softmax"
+    )
 
-    tf.keras.layers.MaxPooling2D(),
-
-    # Third feature detector
-    tf.keras.layers.Conv2D(
-        128, # number of filters
-        (3, 3),
-        activation="relu"
-    ),
-
-    tf.keras.layers.MaxPooling2D(),
-
-# Convert feature maps into a vector
-tf.keras.layers.Flatten(),
-
-# Classification layer
-tf.keras.layers.Dense(
-    128, # number of neurons
-    activation="relu"
-),
-
-# ========================================================
-# DROPOUT
-# ========================================================
-#
-# Dropout helps prevent overfitting.
-#
-# During training, it temporarily disables a random
-# percentage of neurons in the previous layer.
-#
-# With 0.5, approximately 50% of those neurons are
-# temporarily ignored during each training step.
-#
-# This forces the network to learn using multiple useful
-# features instead of depending too heavily on specific
-# neurons.
-#
-# Dropout is only active during training. When the model
-# is tested, all neurons are used normally.
-#
-# Currently removed due to harming performance as of removing it
-#
-# ========================================================
-
-# tf.keras.layers.Dropout(
-#    0.5
-#),
-
-# Final prediction
-tf.keras.layers.Dense(
-     NUM_CLASSES,
-    activation="softmax"
-)
-
-])
+    ])
 
 
 # ============================================================
@@ -478,11 +482,14 @@ print(
     f"\nTest accuracy: "
     f"{test_accuracy * 100:.2f}%"
 )
-def main():
-    
-    # Top scores 
-    print(f"Best run: ")
-    
+def main(new_image_size, new_batch_size):
+    # First UI
+    user_input = ("Would you like to run the defaults, change settings, or see current settings? ")
+    options = ["Defaults", "Change Settings", "See current settings"]
+    option, index = pick(options, user_input, indicator="=>", default_index=0)
+    if option == "Defaults":
+        # Call training function here
+        print("Defaults selected")
     # Current settings
     print(f"Here are you current settings:")
     resolution_input = input("What resolution do you want? \n")
