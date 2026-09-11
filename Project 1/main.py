@@ -478,3 +478,7 @@ print(
     f"\nTest accuracy: "
     f"{test_accuracy * 100:.2f}%"
 )
+def main():
+    print(f"Best run: ") 
+    print(f"Here are you current settings:")
+    user_input = input("")
