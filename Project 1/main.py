@@ -1,5 +1,6 @@
 from pathlib import Path
 import tensorflow as tf
+import time
 
 from coco_builder import build_coco_dataset
 
@@ -49,11 +50,15 @@ MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
 # 128 x 128 gives a good starting point because it is
 # relatively fast to train.
 #
+# (128, 128) → faster, less detail
+# (160, 160) → good middle ground
+# (192, 192) → more detail, slower training
+#
 # Experiment with 160 x 160 or 192 x 192 as desired
 # and compare the accuracy and training time.
 #
 # ========================================================
-IMAGE_SIZE = (128, 128)
+IMAGE_SIZE = (160, 160) # Change this to change image size
 
 BATCH_SIZE = 32
 # ========================================================
@@ -422,6 +427,10 @@ print(
     "=" * 60
 )
 
+# Starts a stopwatch to keep track of time 
+
+start_time = time.time()
+
 history = model.fit(
     train_data,
     validation_data=validation_data,
@@ -430,6 +439,19 @@ history = model.fit(
         best_model_callback,
         early_stopping_callback
     ]
+)
+
+# Stops stopwatch
+end_time = time.time()
+
+# Calculate how training took
+training_time = end_time - start_time
+
+minutes = int(training_time // 60)
+seconds = int(training_time % 60)
+
+print(
+    f"\nTraining time: {minutes} minutes {seconds} seconds"
 )
 
 print("\n[OK] Best model saved to:")
