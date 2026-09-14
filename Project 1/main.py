@@ -183,6 +183,32 @@ def prepare_data():
         )
     )
 
+# def dropout():
+        # ========================================================
+        # DROPOUT
+        # ========================================================
+        #
+        # Dropout helps prevent overfitting.
+        #
+        # During training, it temporarily disables a random
+        # percentage of neurons in the previous layer.
+        #
+        # With 0.5, approximately 50% of those neurons are
+        # temporarily ignored during each training step.
+        #
+        # This forces the network to learn using multiple useful
+        # features instead of depending too heavily on specific
+        # neurons.
+        #
+        # Dropout is only active during training. When the model
+        # is tested, all neurons are used normally.
+        #
+        # Currently removed due to harming performance as of removing it
+        #
+        # ========================================================
+
+        # return tf.keras.layers.Dropout(0.5)
+         
 def build_model():
     model = tf.keras.Sequential([
 
@@ -274,33 +300,7 @@ def build_model():
         activation="relu"
     ),
     
-    def dropout():
-        # ========================================================
-        # DROPOUT
-        # ========================================================
-        #
-        # Dropout helps prevent overfitting.
-        #
-        # During training, it temporarily disables a random
-        # percentage of neurons in the previous layer.
-        #
-        # With 0.5, approximately 50% of those neurons are
-        # temporarily ignored during each training step.
-        #
-        # This forces the network to learn using multiple useful
-        # features instead of depending too heavily on specific
-        # neurons.
-        #
-        # Dropout is only active during training. When the model
-        # is tested, all neurons are used normally.
-        #
-        # Currently removed due to harming performance as of removing it
-        #
-        # ========================================================
-
-        # tf.keras.layers.Dropout(
-        #    0.5
-        #),
+    dropout(),
 
     # Final prediction
     tf.keras.layers.Dense(
@@ -308,7 +308,7 @@ def build_model():
         activation="softmax"
     )
 
-    ])
+])
 
 
 # ============================================================
