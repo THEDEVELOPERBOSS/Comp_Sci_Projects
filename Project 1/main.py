@@ -85,9 +85,8 @@ EPOCHS = 30
 # ============================================================
 # BUILD / CHECK DATASET
 # ============================================================
-def build_coco_dataset():
     
-    build_coco_dataset()
+build_coco_dataset()
 
 
 # ============================================================
@@ -111,7 +110,7 @@ def load_training_data():
             seed=42
         )
     )
-
+    return train_data
 
 # ============================================================
 # LOAD VALIDATION DATA
@@ -133,12 +132,12 @@ def load_validation_data():
             shuffle=False
         )
     )
-
+    return validation_data
 
 # ============================================================
 # GET CLASS NAMES AND SPEED UP DATA PIPELINE(PREPARE DATA)
 # ============================================================
-def prepare_data():
+def prepare_data(train_data, validation_data):
     class_names = (
         train_data.class_names
     )
@@ -182,7 +181,7 @@ def prepare_data():
             buffer_size=AUTOTUNE
         )
     )
-
+    return train_data, validation_data, NUM_CLASSES
 def dropout():
         # ========================================================
         # DROPOUT
@@ -301,7 +300,7 @@ def build_model(NUM_CLASSES):
         activation="relu"
     ),
     
-    dropout(),
+   # dropout(),
 
     # Final prediction
     tf.keras.layers.Dense(
@@ -311,7 +310,7 @@ def build_model(NUM_CLASSES):
 
     ])
     return model
-    return NUM_CLASSES
+
 def compile(model):
     # ============================================================
     # COMPILE
@@ -379,6 +378,7 @@ def training_callbacks():
         save_best_only=True,
         verbose=1
     )
+    return best_model_callback
 def early_stopping():
     # ========================================================
     # EARLY STOPPING
@@ -416,6 +416,7 @@ def early_stopping():
         restore_best_weights=True,
         verbose=1
     )
+    return early_stopping_callback
 
 def train(model, train_data, validation_data, best_model_callback, early_stopping_callback):
     # ============================================================
@@ -487,15 +488,28 @@ def test_model(model):
         f"{test_accuracy * 100:.2f}%"
     )
     return model 
-def main(new_image_size, new_batch_size):
+def main():
     # First UI
-    user_input = ("Would you like to run the defaults, change settings, or see current settings? ")
+    user_input = ("Would you like to run with the defaults, change settings, or see current settings? ")
     options = ["Defaults", "Change Settings", "See current settings"]
     option, index = pick(options, user_input, indicator="=>", default_index=0)
     if option == "Defaults":
-        # Call training function here
-        print("Defaults selected")
+        print("Defaults selected. Beginning training run")
+        build_coco_dataset()
+        train_data = load_training_data()
+        validation_data = load_validation_data()
+        train_data, validation_data, NUM_CLASSES = prepare_data(train_data, validation_data)
+        model = build_model(NUM_CLASSES)
+        model = compile(model)
+        show_model(model)
+        best_model_callback = training_callbacks()
+        early_stopping_callback = early_stopping()
+        train(model, train_data, validation_data, best_model_callback, early_stopping_callback)
+        test_model(model)
     # Current settings
     print(f"Here are you current settings:")
     resolution_input = input("What resolution do you want? \n")
     print()
+
+
+main()
