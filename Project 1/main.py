@@ -497,11 +497,273 @@ def test_model(model):
         f"{test_accuracy * 100:.2f}%"
     )
     return model 
+from tabulate import tabulate
+from pick import pick
+
+
+def choose_image_size():
+
+    # ========================================================
+    # IMAGE SIZE OPTIONS
+    # ========================================================
+    #
+    # Each tuple contains:
+    #
+    # [0] = Name displayed to the user
+    # [1] = Actual image size used by TensorFlow
+    # [2] = Training speed
+    # [3] = Amount of detail
+    # [4] = Memory usage
+    # [5] = What the size is good for
+    #
+    image_sizes = [
+        ("64x64",   (64, 64),   "⚡ Very fast",      "Low",            "Very low",      "Testing/debugging"),
+        ("96x96",   (96, 96),   "⚡ Fast",           "Low–medium",     "Low",           "Basic experiments"),
+        ("128x128", (128, 128), "🟢 Fast",           "Medium",         "Low–medium",    "Good starting point"),
+        ("160x160", (160, 160), "🟢 Medium",         "Medium–high",    "Medium",        "More detailed classification"),
+        ("192x192", (192, 192), "🟡 Slower",         "High",           "Medium",        "Detailed objects"),
+        ("224x224", (224, 224), "🟡 Slower",         "High",           "Medium–high",   "Common CNN size"),
+        ("256x256", (256, 256), "🟠 Slow",           "Very high",      "High",          "More demanding classification"),
+        ("320x320", (320, 320), "🔴 Very slow",      "Very high",      "High",          "Fine details"),
+        ("384x384", (384, 384), "🔴 Extremely slow", "Extremely high", "Very high",      "Usually unnecessary")
+    ]
+
+
+    # ========================================================
+    # DISPLAY THE FULL TABLE
+    # ========================================================
+    #
+    # tabulate turns our list into a readable table.
+    #
+    print(
+        tabulate(
+            image_sizes,
+            headers=[
+                "Image Size",
+                "TensorFlow Value",
+                "Training Speed",
+                "Detail",
+                "Memory Usage",
+                "Good For"
+            ],
+            tablefmt="rounded_outline"
+        )
+    )
+
+    print()
+
+
+    # ========================================================
+    # CREATE THE PICK OPTIONS
+    # ========================================================
+    #
+    # pick() needs a simple list of choices.
+    #
+    # We only give it the image-size names because those
+    # are what the user needs to select.
+    #
+    choices = []
+
+    for row in image_sizes:
+
+        # row[0] is the image-size name.
+        #
+        # Example:
+        # "64x64"
+        # "96x96"
+        # "128x128"
+        #
+        choices.append(row[0])
+
+
+    # ========================================================
+    # LET THE USER SELECT AN IMAGE SIZE
+    # ========================================================
+    #
+    # The user can use:
+    #
+    # ↑ = Move up
+    # ↓ = Move down
+    # ENTER = Select
+    #
+    # selected = the text of the selected choice
+    # index = the position of the selected choice
+    #
+    selected, index = pick(
+        choices,
+        "Select an image size:"
+    )
+
+
+    # ========================================================
+    # RETURN THE ACTUAL IMAGE SIZE
+    # ========================================================
+    #
+    # image_sizes[index] gets the row the user selected.
+    #
+    # [1] gets the actual TensorFlow image size from that row.
+    #
+    # Example:
+    #
+    # ("192x192", (192, 192), ...)
+    #                ↑
+    #              [1]
+    #
+    # Therefore, this returns:
+    #
+    # (192, 192)
+    #
+    return image_sizes[index][1]
+
+
+# ============================================================
+# TEST THE FUNCTION
+# ============================================================
+
+IMAGE_SIZE = choose_image_size()
+
+print()
+print("Selected image size:", IMAGE_SIZE)
+    
+    # ========================================================
+    # IMAGE SIZE OPTIONS
+    # ========================================================
+    #
+    # Each row contains information about one possible
+    # image size.
+    #
+    # [0] = The name displayed to the user
+    # [1] = The actual (width, height) value TensorFlow uses
+    # [2] = Approximate training speed
+    # [3] = Amount of image detail
+    # [4] = Approximate memory usage
+    # [5] = What the image size is good for
+    #
+    image_size_options = [
+        [(64, 64), "⚡ Very fast", "Low", "Very low", "Testing/debugging"],
+        [(96, 96), "⚡ Fast", "Low–medium", "Low", "Basic experiments"],
+        [(128, 128), "🟢 Fast", "Medium", "Low–medium", "Good starting point"],
+        [(160, 160), "🟢 Medium", "Medium–high", "Medium", "More detailed classification"],
+        [(192, 192), "🟡 Slower", "High", "Medium", "Detailed objects"],
+        [(224, 224), "🟡 Slower", "High", "Medium–high", "Common CNN size"],
+        [(256, 256), "🟠 Slow", "Very high", "High", "More demanding classification"],
+        [(320, 320), "🔴 Very slow", "Very high", "High", "Fine details"],
+        [(384, 384), "🔴 Extremely slow", "Extremely high", "Very high", "NUKE YOUR COMPUTER AND TAKE FOREVER"]
+    ]
+    
+    # ========================================================
+    # DISPLAY THE INFORMATION TABLE
+    # ========================================================
+    #
+    # tabulate takes our image_sizes list and turns it into
+    # a readable table in the terminal.
+    #      
+    print(
+        tabulate(
+            image_size_options,
+            headers=[
+                "Image Size",
+                "Training Speed",
+                "Detail",
+                "Memory Usage",
+                "Good For"
+            ],
+            tablefmt="rounded_outline"
+        )
+    )
+    # ========================================================
+    # CREATE THE LIST FOR PICK
+    # ========================================================
+    #
+    # pick() needs a simple list of choices that the user
+    # can move through with the arrow keys.
+    #
+    # We only want to show the image-size name here.
+    #
+    # For example:
+    #
+    # [
+    #     "64x64",
+    #     "96x96",
+    #     "128x128",
+    #     ...
+    # ]
+    #
+    choices = []
+    
+    for row in image_size_options:
+        # row[0] is the "64x64", "96x96", etc.
+        #
+        # We add that value to the choices list so pick()
+        # can display it to the user.
+        choices.append(row[0])
+    
+    # ========================================================
+    # LET THE USER SELECT AN IMAGE SIZE
+    # ========================================================
+    #
+    # pick() creates the arrow-key selection menu.
+    #
+    # The user can:
+    #   ↑ = move up
+    #   ↓ = move down
+    #   ENTER = select
+    #
+    # pick() gives us two values back:
+    #
+    # selected = the actual choice that was selected
+    # index    = the position of that choice in our list
+    #
+    selected, index = pick(
+        choices, 
+        "Select an image size: "
+    )
+     # ========================================================
+    # RETURN THE ACTUAL IMAGE SIZE
+    # ========================================================
+    #
+    # index tells us which row the user selected.
+    #
+    # [1] gets the actual TensorFlow image-size value
+    # from that row.
+    #
+    # For example, if the user selects:
+    #
+    #     192x192
+    #
+    # index might be:
+    #
+    #     4
+    #
+    # image_sizes[4] gives us:
+    #
+    #     ("192x192", (192, 192), ...)
+    #
+    # image_sizes[4][1] gives us:
+    #
+    #     (192, 192)
+    #
+    return image_size_options[index][0]
+
 def main():
-    # First UI. Maybe add a way to reset to defaults. 
-    user_input = ("Would you like to: \nRun with the defaults \nChange settings \nLearn \nChoose a set of saved settings\n See current settings ")
-    options = ["Defaults", "Change Settings", "Learn", "Saved settings", "See current settings",]
+    # First UI. Maybe add a way to reset to defaults.
+    user_input = (
+        "Would you like to: \n"
+        "Run with the defaults \n"
+        "Change settings \n"
+        "Learn \n"
+        "Choose a set of saved settings\n"
+        "See current settings"
+    )
+    options = [
+        "Defaults",
+        "Change Settings",
+        "Learn",
+        "Saved settings",
+        "See current settings",
+    ]
     option, index = pick(options, user_input, indicator="=>", default_index=0)
+
     # Defaults
     if option == "Defaults":
         print("Defaults selected. Beginning training run")
@@ -516,36 +778,32 @@ def main():
         early_stopping_callback = early_stopping()
         train(model, train_data, validation_data, best_model_callback, early_stopping_callback)
         test_model(model)
-    # Current settings
+
+    # Change settings
     elif option == "Change Settings":
-        user_input = ("What would you like to change? ")
-        options = ["Epochs", "Image Size", "Batch Size" ]
+        user_input = "What would you like to change? "
+        options = ["Epochs", "Image Size", "Batch Size"]
         option, index = pick(options, user_input, indicator="=>", default_index=0)
+
         if option == "Epochs":
             print("How many epochs do you want?")
             epoch_input = input("")
             EPOCHS = epoch_input
             print(f"The model will run for {EPOCHS} epochs")
         elif option == "Image Size":
-            print("What image size do you want?")
-            image_size_options = [
-                ("64x64", (64, 64)),
-                ("98x98", (98, 98)),
-                ("128x128", (128, 128)),
-                ("160X160", (160, 160)),
-                ("192x192", (192, 192)),
-                ("224x224", (224, 224)),
-                ("256x256", (256, 256))
-            ]
-            table = []
-            
-            for name, size in image_size_options:
-                table.append([name, size])
+            IMAGE_SIZE = choose_image_size()
+        elif option == "Batch Size":
+            print("Batch size selection is not implemented yet.")
+
     elif option == "See current settings":
-        print(f"Here are you current settings:")
+        print("Here are your current settings:")
         print()
+
     elif option == "Learn":
         print("What would you like to learn? ")
+
+    elif option == "Saved settings":
+        print("Saved settings menu is not implemented yet.")
 
 
 main()
