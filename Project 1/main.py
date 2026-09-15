@@ -6,6 +6,7 @@ import tensorflow as tf
 import time
 from pick import pick
 from coco_builder import build_coco_dataset
+from tabulate import tabulate
 
 # ============================================================
 # PROJECT PATHS
@@ -61,8 +62,16 @@ MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
 #
 # ========================================================
 IMAGE_SIZE = (160, 160)
-
-BATCH_SIZE = 32
+# ========================================================
+# BATCH_SIZE
+#
+# Makes predictions on # of images
+# Compares predicitons to correct answers
+# Calculates the error and updates the weights
+# Moves on to next # of images
+# 
+# ========================================================
+BATCH_SIZE = 32 
 # ========================================================
 # MAXIMUM NUMBER OF EPOCHS
 # ========================================================
@@ -489,10 +498,11 @@ def test_model(model):
     )
     return model 
 def main():
-    # First UI
-    user_input = ("Would you like to run with the defaults, change settings, or see current settings? ")
-    options = ["Defaults", "Change Settings", "See current settings"]
+    # First UI. Maybe add a way to reset to defaults. 
+    user_input = ("Would you like to: \nRun with the defaults \nChange settings \nLearn \nChoose a set of saved settings\n See current settings ")
+    options = ["Defaults", "Change Settings", "Learn", "Saved settings", "See current settings",]
     option, index = pick(options, user_input, indicator="=>", default_index=0)
+    # Defaults
     if option == "Defaults":
         print("Defaults selected. Beginning training run")
         build_coco_dataset()
@@ -507,9 +517,35 @@ def main():
         train(model, train_data, validation_data, best_model_callback, early_stopping_callback)
         test_model(model)
     # Current settings
-    print(f"Here are you current settings:")
-    resolution_input = input("What resolution do you want? \n")
-    print()
+    elif option == "Change Settings":
+        user_input = ("What would you like to change? ")
+        options = ["Epochs", "Image Size", "Batch Size" ]
+        option, index = pick(options, user_input, indicator="=>", default_index=0)
+        if option == "Epochs":
+            print("How many epochs do you want?")
+            epoch_input = input("")
+            EPOCHS = epoch_input
+            print(f"The model will run for {EPOCHS} epochs")
+        elif option == "Image Size":
+            print("What image size do you want?")
+            image_size_options = [
+                ("64x64", (64, 64)),
+                ("98x98", (98, 98)),
+                ("128x128", (128, 128)),
+                ("160X160", (160, 160)),
+                ("192x192", (192, 192)),
+                ("224x224", (224, 224)),
+                ("256x256", (256, 256))
+            ]
+            table = []
+            
+            for name, size in image_size_options:
+                table.append([name, size])
+    elif option == "See current settings":
+        print(f"Here are you current settings:")
+        print()
+    elif option == "Learn":
+        print("What would you like to learn? ")
 
 
 main()
