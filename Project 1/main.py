@@ -183,7 +183,7 @@ def prepare_data():
         )
     )
 
-# def dropout():
+def dropout():
         # ========================================================
         # DROPOUT
         # ========================================================
@@ -208,10 +208,11 @@ def prepare_data():
         # ========================================================
 
         # return tf.keras.layers.Dropout(0.5)
+        return 
          
-def build_model():
+def build_model(NUM_CLASSES):
     model = tf.keras.Sequential([
-
+    
     # ========================================================
     # DATA AUGMENTATION
     # ========================================================
@@ -308,180 +309,184 @@ def build_model():
         activation="softmax"
     )
 
-])
+    ])
+    return model
+    return NUM_CLASSES
+def compile(model):
+    # ============================================================
+    # COMPILE
+    # ============================================================
 
+    model.compile(
 
-# ============================================================
-# COMPILE
-# ============================================================
+        optimizer="adam",
 
-model.compile(
+        loss=(
+            "sparse_categorical_crossentropy"
+        ),
 
-    optimizer="adam",
+        metrics=[
+            "accuracy"
+        ]
+    )
+    return model
+def show_model(model):
+    # ============================================================
+    # SHOW MODEL
+    # ============================================================
 
-    loss=(
-        "sparse_categorical_crossentropy"
-    ),
+    print("\nModel architecture:")
 
-    metrics=[
-        "accuracy"
-    ]
-)
+    model.summary()
+    return model
 
+def training_callbacks():
+    # ============================================================
+    # TRAINING CALLBACKS
+    # ============================================================
 
-# ============================================================
-# SHOW MODEL
-# ============================================================
+    # ========================================================
+    # BEST MODEL CHECKPOINT
+    # ========================================================
+    #
+    # During training, the model's performance can improve
+    # and then get worse.
+    #
+    # We don't want to accidentally keep a worse version of
+    # the model.
+    #
+    # ModelCheckpoint automatically saves the model whenever
+    # validation accuracy reaches a new best value.
+    #
+    # monitor="val_accuracy":
+    # We use validation accuracy to decide which model is best.
+    #
+    # mode="max":
+    # A higher validation accuracy means a better model.
+    #
+    # save_best_only=True:
+    # Only save the model when it beats the previous best.
+    #
+    # MODEL_PATH:
+    # This is the file where the best model is saved.
+    #
+    # ========================================================
+    # Save the model whenever validation accuracy improves.
+    best_model_callback = tf.keras.callbacks.ModelCheckpoint(
+        MODEL_PATH,
+        monitor="val_accuracy",
+        mode="max",
+        save_best_only=True,
+        verbose=1
+    )
+def early_stopping():
+    # ========================================================
+    # EARLY STOPPING
+    # ========================================================
+    #
+    # Early stopping prevents the model from continuing to
+    # train when it stops getting better on validation data.
+    #
+    # The model could eventually start memorizing the training
+    # images instead of learning features that generalize to
+    # new images. This is called overfitting.
+    #
+    # monitor="val_accuracy":
+    # We watch the validation accuracy.
+    #
+    # mode="max":
+    # Higher validation accuracy is better.
+    #
+    # patience=3:
+    # Training is allowed to continue for 3 more epochs after
+    # validation accuracy stops improving.
+    #
+    # restore_best_weights=True:
+    # When training stops, TensorFlow restores the model weights
+    # from the epoch that had the best validation accuracy.
+    #
+    # This means we keep the best version of the model rather
+    # than simply keeping the final version.
+    #
+    # ========================================================
+    early_stopping_callback = tf.keras.callbacks.EarlyStopping(
+        monitor="val_accuracy",
+        mode="max",
+        patience=3,
+        restore_best_weights=True,
+        verbose=1
+    )
 
-print("\nModel architecture:")
+def train(model, train_data, validation_data, best_model_callback, early_stopping_callback):
+    # ============================================================
+    # TRAIN
+    # ============================================================
 
-model.summary()
+    print(
+        "\n" +
+        "=" * 60
+    )
 
+    print("STARTING TRAINING")
 
+    print(
+        "=" * 60
+    )
 
-# ============================================================
-# TRAINING CALLBACKS
-# ============================================================
+    # Starts a stopwatch to keep track of time 
 
-# ========================================================
-# BEST MODEL CHECKPOINT
-# ========================================================
-#
-# During training, the model's performance can improve
-# and then get worse.
-#
-# We don't want to accidentally keep a worse version of
-# the model.
-#
-# ModelCheckpoint automatically saves the model whenever
-# validation accuracy reaches a new best value.
-#
-# monitor="val_accuracy":
-# We use validation accuracy to decide which model is best.
-#
-# mode="max":
-# A higher validation accuracy means a better model.
-#
-# save_best_only=True:
-# Only save the model when it beats the previous best.
-#
-# MODEL_PATH:
-# This is the file where the best model is saved.
-#
-# ========================================================
-# Save the model whenever validation accuracy improves.
-best_model_callback = tf.keras.callbacks.ModelCheckpoint(
-    MODEL_PATH,
-    monitor="val_accuracy",
-    mode="max",
-    save_best_only=True,
-    verbose=1
-)
+    start_time = time.time()
 
-# ========================================================
-# EARLY STOPPING
-# ========================================================
-#
-# Early stopping prevents the model from continuing to
-# train when it stops getting better on validation data.
-#
-# The model could eventually start memorizing the training
-# images instead of learning features that generalize to
-# new images. This is called overfitting.
-#
-# monitor="val_accuracy":
-# We watch the validation accuracy.
-#
-# mode="max":
-# Higher validation accuracy is better.
-#
-# patience=3:
-# Training is allowed to continue for 3 more epochs after
-# validation accuracy stops improving.
-#
-# restore_best_weights=True:
-# When training stops, TensorFlow restores the model weights
-# from the epoch that had the best validation accuracy.
-#
-# This means we keep the best version of the model rather
-# than simply keeping the final version.
-#
-# ========================================================
-early_stopping_callback = tf.keras.callbacks.EarlyStopping(
-    monitor="val_accuracy",
-    mode="max",
-    patience=3,
-    restore_best_weights=True,
-    verbose=1
-)
+    history = model.fit(
+        train_data,
+        validation_data=validation_data,
+        epochs=EPOCHS,
+        callbacks=[
+            best_model_callback,
+            early_stopping_callback
+        ]
+    )
 
+    # Stops stopwatch
+    end_time = time.time()
 
-# ============================================================
-# TRAIN
-# ============================================================
+    # Calculate how training took
+    training_time = end_time - start_time
 
-print(
-    "\n" +
-    "=" * 60
-)
+    minutes = int(training_time // 60)
+    seconds = int(training_time % 60)
 
-print("STARTING TRAINING")
+    print(
+        f"\nTraining time: {minutes} minutes {seconds} seconds"
+    )
 
-print(
-    "=" * 60
-)
+    print("\n[OK] Best model saved to:")
+    print(MODEL_PATH)
+    return model, train_data, validation_data, best_model_callback, early_stopping_callback
+def test_model(model):
+    # ============================================================
+    # TEST MODEL
+    # ============================================================
 
-# Starts a stopwatch to keep track of time 
+    print("\nLoading test data...")
 
-start_time = time.time()
+    test_data = tf.keras.utils.image_dataset_from_directory(
+        str(TEST_DIR),
+        image_size=IMAGE_SIZE,
+        batch_size=BATCH_SIZE,
+        label_mode="int",
+        shuffle=False
+    )
 
-history = model.fit(
-    train_data,
-    validation_data=validation_data,
-    epochs=EPOCHS,
-    callbacks=[
-        best_model_callback,
-        early_stopping_callback
-    ]
-)
+    print("\nTesting model...")
 
-# Stops stopwatch
-end_time = time.time()
+    test_loss, test_accuracy = model.evaluate(test_data)
 
-# Calculate how training took
-training_time = end_time - start_time
-
-minutes = int(training_time // 60)
-seconds = int(training_time % 60)
-
-print(
-    f"\nTraining time: {minutes} minutes {seconds} seconds"
-)
-
-print("\n[OK] Best model saved to:")
-print(MODEL_PATH)
-# ============================================================
-# TEST MODEL
-# ============================================================
-
-print("\nLoading test data...")
-
-test_data = tf.keras.utils.image_dataset_from_directory(
-    str(TEST_DIR),
-    image_size=IMAGE_SIZE,
-    batch_size=BATCH_SIZE,
-    label_mode="int",
-    shuffle=False
-)
-
-print("\nTesting model...")
-
-test_loss, test_accuracy = model.evaluate(test_data)
-
-print(
-    f"\nTest accuracy: "
-    f"{test_accuracy * 100:.2f}%"
-)
+    print(
+        f"\nTest accuracy: "
+        f"{test_accuracy * 100:.2f}%"
+    )
+    return model 
 def main(new_image_size, new_batch_size):
     # First UI
     user_input = ("Would you like to run the defaults, change settings, or see current settings? ")
