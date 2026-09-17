@@ -680,11 +680,15 @@ def main():
 
     elif option == "See current settings":
         print("Here are your current settings:")
-        print()
+        print(f"Epochs: {EPOCHS}")
+        print(f"Image Size: {IMAGE_SIZE}")
+        print(f"Batch Size: {BATCH_SIZE}")
 
     elif option == "Learn":
-        print("What would you like to learn? ")
-
+        user_input = input("What would you like to learn about? ")
+        options = ["Epochs", "Image Size", "Batch Size"]
+        option, index = pick(options, user_input, indicator="=>", default_index=0)
+        
     elif option == "Saved settings":
         print("Saved settings menu is not implemented yet.")
 
