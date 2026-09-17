@@ -39,7 +39,7 @@ PATIENCE = 3
 # IMAGE SIZE
 # ========================================================
 #
-# Every image is resized to 128 x 128 pixels before being
+# Every image is resized to the image size in pixels before being
 # given to the CNN.
 #
 # Neural networks need their input images to have the same
@@ -677,20 +677,25 @@ def change_patience():
 # ============================================================
 def learn_epochs():
     global early_stopping_callback
-    print("Epochs are the amount of times it will train before the model gets tested.\n")
+    print("\nEpochs are the amount of times it will train before the model gets tested.\n")
     print(f"The model is also designed to stop training if no improvement is made in {PATIENCE} runs")
     
-    input("Press ENTER when you are finished reading...")
+    input("\nPress ENTER when you are finished reading...")
 def learn_image_size():
-    print("Image size is ")
+    print("\nEvery image is resized to the image size in pixels before being given to the CNN.")
+    print("Neural networks need their input images to have the same dimensions.")
+    print("A larger image size can contain more visual information, \nwhich may help the CNN recognize small details.")
+    print("However, larger images require more memory and take longer to process.")
     
-    input("Press ENTER when you are finished reading...")
+    input("\nPress ENTER when you are finished reading...")
 def learn_batch_size():
     print("Batch size is ")
-    input("Press ENTER when you are finished reading...")
+    
+    input("\nPress ENTER when you are finished reading...")
 def learn_patience():
-    print("Patience is ")
-    input("Press ENTER when you are finished reading...")
+    print("\nPatience is ")
+    
+    input("\nPress ENTER when you are finished reading...")
 # ============================================================
 # MENUS
 # ============================================================
@@ -754,9 +759,10 @@ def main():
             print(f"Epochs: {EPOCHS}")
             print(f"Image Size: {IMAGE_SIZE}")
             print(f"Batch Size: {BATCH_SIZE}")
+            print(f"Patience: {PATIENCE}")
 
         elif option == "Learn":
-            user_input = input("What would you like to learn about? ")
+            user_input = "What would you like to learn about? "
             options = ["Epochs", "Image Size", "Batch Size", "Patience"]
             option, index = pick(options, user_input, indicator="=>", default_index=0)
             
