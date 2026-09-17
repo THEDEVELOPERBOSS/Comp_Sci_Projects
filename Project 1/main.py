@@ -34,6 +34,7 @@ MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
 # ============================================================
 # SETTINGS
 # ============================================================
+PATIENCE = 3
 # ========================================================
 # IMAGE SIZE
 # ========================================================
@@ -417,11 +418,20 @@ def early_stopping():
     # This means we keep the best version of the model rather
     # than simply keeping the final version.
     #
+    # Verbose is how much information it prints while it runs
+    # verbose=0: Prints nothing. Silent 
+    #
+    # verbose=1: prints info about what is happening. 
+    # Ex:For EarlyStopping a message will appear that training has stopped
+    #
+    # verbose=2: More detailed output in some keras functions
+    # Ex: for model.fit() it usually prints one line per epoch rather
+    # than the animated progress bar
     # ========================================================
     early_stopping_callback = tf.keras.callbacks.EarlyStopping(
         monitor="val_accuracy",
         mode="max",
-        patience=3,
+        patience=PATIENCE,
         restore_best_weights=True,
         verbose=1
     )
@@ -525,7 +535,7 @@ def choose_image_size():
         ("224x224", (224, 224), "🟡 Slower",         "High",           "Medium–high",   "Common CNN size"),
         ("256x256", (256, 256), "🟠 Slow",           "Very high",      "High",          "More demanding classification"),
         ("320x320", (320, 320), "🔴 Very slow",      "Very high",      "High",          "Fine details"),
-        ("384x384", (384, 384), "🔴 Extremely slow", "Extremely high", "Very high",      "Usually unnecessary")
+        ("384x384", (384, 384), "🔴 Extremely slow", "Extremely high", "Very high",      "INSANE ")
     ]
 
 
@@ -627,70 +637,132 @@ def choose_image_size():
     # (192, 192)
     #
     return image_sizes[index][1]
-def main():
+# ============================================================
+# SETTINGS FUNCTIONS
+# ============================================================
+def change_epochs():
+    global EPOCHS
+
+    print("How many epochs do you want?")
+    EPOCHS = int(input())
+
+    print(f"The model will run for {EPOCHS} epochs")
+
+def change_image_size():
+    global IMAGE_SIZE
+
+    IMAGE_SIZE = choose_image_size()
+
+
+def change_batch_size():
+    global BATCH_SIZE
+
+    print("Batch size selection is not implemented yet.")
+
+
+def see_current_settings():
+    print("Here are your current settings:")
+    print(f"Epochs: {EPOCHS}")
+    print(f"Image Size: {IMAGE_SIZE}")
+    print(f"Batch Size: {BATCH_SIZE}")
+
+def change_patience():
+    global PATIENCE
+    print("What would you like to change patience too?")
+    PATIENCE = int(input())
     
-    # First UI. Maybe add a way to reset to defaults.
-    user_input = (
-        "Would you like to: \n"
-        "Run with the defaults \n"
-        "Change settings \n"
-        "Learn \n"
-        "Choose a set of saved settings\n"
-        "See current settings"
-    )
-    options = [
-        "Defaults",
-        "Change Settings",
-        "Learn",
-        "Saved settings",
-        "See current settings",
-    ]
-    option, index = pick(options, user_input, indicator="=>", default_index=0)
-
-    # Defaults
-    if option == "Defaults":
-        print("Defaults selected. Beginning training run")
-        build_coco_dataset()
-        train_data = load_training_data()
-        validation_data = load_validation_data()
-        train_data, validation_data, NUM_CLASSES = prepare_data(train_data, validation_data)
-        model = build_model(NUM_CLASSES)
-        model = compile(model)
-        show_model(model)
-        best_model_callback = training_callbacks()
-        early_stopping_callback = early_stopping()
-        train(model, train_data, validation_data, best_model_callback, early_stopping_callback)
-        test_model(model)
-
-    # Change settings
-    elif option == "Change Settings":
-        user_input = "What would you like to change? "
-        options = ["Epochs", "Image Size", "Batch Size"]
+    print(f"Patience is now set to {PATIENCE}")
+# ============================================================
+# LEARN FUNCTIONS
+# ============================================================
+def learn_epochs():
+    global early_stopping_callback
+    print("Epochs are the amount of times it will train before the model gets tested.\n")
+    print(f"The model is also designed to stop training if no improvement is made in {PATIENCE} runs")
+    
+    input("Press ENTER when you are finished reading...")
+def learn_image_size():
+    print("Image size is ")
+    
+    input("Press ENTER when you are finished reading...")
+def learn_batch_size():
+    print("Batch size is ")
+    input("Press ENTER when you are finished reading...")
+def learn_patience():
+    print("Patience is ")
+    input("Press ENTER when you are finished reading...")
+# ============================================================
+# MENUS
+# ============================================================
+settings_menu = {
+    "Epochs": change_epochs,
+    "Image Size": change_image_size,
+    "Batch Size": change_batch_size,
+    "Patience": change_patience
+}
+learn_menu = {
+    "Epochs": learn_epochs,
+    "Image Size": learn_image_size,
+    "Batch Size": learn_batch_size
+    "Patience": learn_patience
+}
+def main():
+    while True:
+        # First UI. Maybe add a way to reset to defaults.
+        user_input = (
+            "Would you like to: \n"
+            "Run with the defaults \n"
+            "Change settings \n"
+            "Learn \n"
+            "Choose a set of saved settings\n"
+            "See current settings"
+        )
+        options = [
+            "Defaults",
+            "Change Settings",
+            "Learn",
+            "Saved settings",
+            "See current settings",
+        ]
         option, index = pick(options, user_input, indicator="=>", default_index=0)
 
-        if option == "Epochs":
-            print("How many epochs do you want?")
-            epoch_input = input("")
-            EPOCHS = epoch_input
-            print(f"The model will run for {EPOCHS} epochs")
-        elif option == "Image Size":
-            IMAGE_SIZE = choose_image_size()
-        elif option == "Batch Size":
-            print("Batch size selection is not implemented yet.")
+        # Defaults
+        if option == "Defaults":
+            print("Defaults selected. Beginning training run")
+            build_coco_dataset()
+            train_data = load_training_data()
+            validation_data = load_validation_data()
+            train_data, validation_data, NUM_CLASSES = prepare_data(train_data, validation_data)
+            model = build_model(NUM_CLASSES)
+            model = compile(model)
+            show_model(model)
+            best_model_callback = training_callbacks()
+            early_stopping_callback = early_stopping()
+            train(model, train_data, validation_data, best_model_callback, early_stopping_callback)
+            test_model(model)
 
-    elif option == "See current settings":
-        print("Here are your current settings:")
-        print(f"Epochs: {EPOCHS}")
-        print(f"Image Size: {IMAGE_SIZE}")
-        print(f"Batch Size: {BATCH_SIZE}")
+        # Change settings
+        elif option == "Change Settings":
+            user_input = "What would you like to change? "
+            options = ["Epochs", "Image Size", "Batch Size", "Patience"]
+            option, index = pick(options, user_input, indicator="=>", default_index=0)
 
-    elif option == "Learn":
-        user_input = input("What would you like to learn about? ")
-        options = ["Epochs", "Image Size", "Batch Size"]
-        option, index = pick(options, user_input, indicator="=>", default_index=0)
-        
-    elif option == "Saved settings":
-        print("Saved settings menu is not implemented yet.")
+            settings_menu[option]()
+
+        elif option == "See current settings":
+            print("Here are your current settings:")
+            print(f"Epochs: {EPOCHS}")
+            print(f"Image Size: {IMAGE_SIZE}")
+            print(f"Batch Size: {BATCH_SIZE}")
+
+        elif option == "Learn":
+            user_input = input("What would you like to learn about? ")
+            options = ["Epochs", "Image Size", "Batch Size", "Patience"]
+            option, index = pick(options, user_input, indicator="=>", default_index=0)
+            
+            learn_menu[option]()
+        elif option == "Saved settings":
+            print("Saved settings menu is not implemented yet.")
 
 
 main()

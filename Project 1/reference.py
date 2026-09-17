@@ -21,3 +21,8 @@ def dropout(use_dropout):
         )
 
     return None
+
+def function(variable):
+
+def function():
+    global variable
