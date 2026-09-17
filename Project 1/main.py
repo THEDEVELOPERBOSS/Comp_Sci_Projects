@@ -535,7 +535,7 @@ def choose_image_size():
         ("224x224", (224, 224), "🟡 Slower",         "High",           "Medium–high",   "Common CNN size"),
         ("256x256", (256, 256), "🟠 Slow",           "Very high",      "High",          "More demanding classification"),
         ("320x320", (320, 320), "🔴 Very slow",      "Very high",      "High",          "Fine details"),
-        ("384x384", (384, 384), "🔴 Extremely slow", "Extremely high", "Very high",      "INSANE ")
+        ("384x384", (384, 384), "🔴 Extremely slow", "Extremely high", "Very high",      "INSANE")
     ]
 
 
@@ -703,7 +703,7 @@ settings_menu = {
 learn_menu = {
     "Epochs": learn_epochs,
     "Image Size": learn_image_size,
-    "Batch Size": learn_batch_size
+    "Batch Size": learn_batch_size,
     "Patience": learn_patience
 }
 def main():
