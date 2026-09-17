@@ -530,27 +530,24 @@ def choose_image_size():
 
 
     # ========================================================
-    # DISPLAY THE FULL TABLE
+    # CREATE THE TABLE
     # ========================================================
     #
-    # tabulate turns our list into a readable table.
+    # tabulate turns our image-size information into a
+    # readable table.
     #
-    print(
-        tabulate(
-            image_sizes,
-            headers=[
-                "Image Size",
-                "TensorFlow Value",
-                "Training Speed",
-                "Detail",
-                "Memory Usage",
-                "Good For"
-            ],
-            tablefmt="rounded_outline"
-        )
+    table = tabulate(
+        image_sizes,
+        headers=[
+            "Image Size",
+            "TensorFlow Value",
+            "Training Speed",
+            "Detail",
+            "Memory Usage",
+            "Good For"
+        ],
+        tablefmt="rounded_outline"
     )
-
-    print()
 
 
     # ========================================================
@@ -559,39 +556,50 @@ def choose_image_size():
     #
     # pick() needs a simple list of choices.
     #
-    # We only give it the image-size names because those
-    # are what the user needs to select.
+    # We use only the image-size names for the choices.
     #
     choices = []
 
     for row in image_sizes:
 
-        # row[0] is the image-size name.
-        #
-        # Example:
-        # "64x64"
-        # "96x96"
-        # "128x128"
-        #
         choices.append(row[0])
+
+
+    # ========================================================
+    # CREATE THE PICK TITLE
+    # ========================================================
+    #
+    # Instead of using print() for the table, we put the
+    # table directly into pick().
+    #
+    # This is important because pick() controls the terminal
+    # screen and may clear anything printed before it.
+    #
+    title = (
+        "Select an image size:\n\n"
+        + table
+        + "\n\n"
+        + "Use ↑/↓ to move and ENTER to select:"
+    )
 
 
     # ========================================================
     # LET THE USER SELECT AN IMAGE SIZE
     # ========================================================
     #
-    # The user can use:
+    # pick() now displays:
     #
-    # ↑ = Move up
-    # ↓ = Move down
-    # ENTER = Select
+    # 1. The full table
+    # 2. The selectable image-size options
     #
-    # selected = the text of the selected choice
-    # index = the position of the selected choice
+    # The user can move through the options using the
+    # arrow keys.
     #
     selected, index = pick(
         choices,
-        "Select an image size:"
+        title,
+        indicator="=>",
+        default_index=2
     )
 
 
@@ -599,153 +607,28 @@ def choose_image_size():
     # RETURN THE ACTUAL IMAGE SIZE
     # ========================================================
     #
-    # image_sizes[index] gets the row the user selected.
+    # index tells us which image-size row the user selected.
     #
-    # [1] gets the actual TensorFlow image size from that row.
+    # [1] gets the actual (width, height) value that
+    # TensorFlow uses.
     #
     # Example:
     #
-    # ("192x192", (192, 192), ...)
-    #                ↑
-    #              [1]
+    # image_sizes[4]
     #
-    # Therefore, this returns:
+    # gives:
+    #
+    # ("192x192", (192, 192), ...)
+    #
+    # image_sizes[4][1]
+    #
+    # gives:
     #
     # (192, 192)
     #
     return image_sizes[index][1]
-
-
-# ============================================================
-# TEST THE FUNCTION
-# ============================================================
-
-IMAGE_SIZE = choose_image_size()
-
-print()
-print("Selected image size:", IMAGE_SIZE)
-    
-    # ========================================================
-    # IMAGE SIZE OPTIONS
-    # ========================================================
-    #
-    # Each row contains information about one possible
-    # image size.
-    #
-    # [0] = The name displayed to the user
-    # [1] = The actual (width, height) value TensorFlow uses
-    # [2] = Approximate training speed
-    # [3] = Amount of image detail
-    # [4] = Approximate memory usage
-    # [5] = What the image size is good for
-    #
-    image_size_options = [
-        [(64, 64), "⚡ Very fast", "Low", "Very low", "Testing/debugging"],
-        [(96, 96), "⚡ Fast", "Low–medium", "Low", "Basic experiments"],
-        [(128, 128), "🟢 Fast", "Medium", "Low–medium", "Good starting point"],
-        [(160, 160), "🟢 Medium", "Medium–high", "Medium", "More detailed classification"],
-        [(192, 192), "🟡 Slower", "High", "Medium", "Detailed objects"],
-        [(224, 224), "🟡 Slower", "High", "Medium–high", "Common CNN size"],
-        [(256, 256), "🟠 Slow", "Very high", "High", "More demanding classification"],
-        [(320, 320), "🔴 Very slow", "Very high", "High", "Fine details"],
-        [(384, 384), "🔴 Extremely slow", "Extremely high", "Very high", "NUKE YOUR COMPUTER AND TAKE FOREVER"]
-    ]
-    
-    # ========================================================
-    # DISPLAY THE INFORMATION TABLE
-    # ========================================================
-    #
-    # tabulate takes our image_sizes list and turns it into
-    # a readable table in the terminal.
-    #      
-    print(
-        tabulate(
-            image_size_options,
-            headers=[
-                "Image Size",
-                "Training Speed",
-                "Detail",
-                "Memory Usage",
-                "Good For"
-            ],
-            tablefmt="rounded_outline"
-        )
-    )
-    # ========================================================
-    # CREATE THE LIST FOR PICK
-    # ========================================================
-    #
-    # pick() needs a simple list of choices that the user
-    # can move through with the arrow keys.
-    #
-    # We only want to show the image-size name here.
-    #
-    # For example:
-    #
-    # [
-    #     "64x64",
-    #     "96x96",
-    #     "128x128",
-    #     ...
-    # ]
-    #
-    choices = []
-    
-    for row in image_size_options:
-        # row[0] is the "64x64", "96x96", etc.
-        #
-        # We add that value to the choices list so pick()
-        # can display it to the user.
-        choices.append(row[0])
-    
-    # ========================================================
-    # LET THE USER SELECT AN IMAGE SIZE
-    # ========================================================
-    #
-    # pick() creates the arrow-key selection menu.
-    #
-    # The user can:
-    #   ↑ = move up
-    #   ↓ = move down
-    #   ENTER = select
-    #
-    # pick() gives us two values back:
-    #
-    # selected = the actual choice that was selected
-    # index    = the position of that choice in our list
-    #
-    selected, index = pick(
-        choices, 
-        "Select an image size: "
-    )
-     # ========================================================
-    # RETURN THE ACTUAL IMAGE SIZE
-    # ========================================================
-    #
-    # index tells us which row the user selected.
-    #
-    # [1] gets the actual TensorFlow image-size value
-    # from that row.
-    #
-    # For example, if the user selects:
-    #
-    #     192x192
-    #
-    # index might be:
-    #
-    #     4
-    #
-    # image_sizes[4] gives us:
-    #
-    #     ("192x192", (192, 192), ...)
-    #
-    # image_sizes[4][1] gives us:
-    #
-    #     (192, 192)
-    #
-    return image_size_options[index][0]
-
 def main():
+    
     # First UI. Maybe add a way to reset to defaults.
     user_input = (
         "Would you like to: \n"
