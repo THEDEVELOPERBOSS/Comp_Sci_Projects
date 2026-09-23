@@ -1,0 +1,6 @@
+tensorflow
+requests
+tqdm
+Pillow
+pick
+tabulate
