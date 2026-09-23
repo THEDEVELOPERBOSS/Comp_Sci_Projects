@@ -91,7 +91,10 @@ BATCH_SIZE = 32
 #
 # ========================================================
 EPOCHS = 30
-
+# ============================================================
+# Dropout on/off
+# ============================================================
+dropout_status = "INACTIVE"
 # ============================================================
 # BUILD / CHECK DATASET
 # ============================================================
@@ -193,6 +196,7 @@ def prepare_data(train_data, validation_data):
     )
     return train_data, validation_data, NUM_CLASSES
 def dropout():
+    if dropout_status == "ACTIVE":
         # ========================================================
         # DROPOUT
         # ========================================================
@@ -216,7 +220,8 @@ def dropout():
         #
         # ========================================================
 
-        # return tf.keras.layers.Dropout(0.5)
+        return tf.keras.layers.Dropout(0.5)
+    else:
         return 
          
 def build_model(NUM_CLASSES):
@@ -653,18 +658,10 @@ def change_image_size():
 
     IMAGE_SIZE = choose_image_size()
 
-
 def change_batch_size():
     global BATCH_SIZE
 
     print("Batch size selection is not implemented yet.")
-
-
-def see_current_settings():
-    print("Here are your current settings:")
-    print(f"Epochs: {EPOCHS}")
-    print(f"Image Size: {IMAGE_SIZE}")
-    print(f"Batch Size: {BATCH_SIZE}")
 
 def change_patience():
     global PATIENCE
@@ -672,6 +669,22 @@ def change_patience():
     PATIENCE = int(input())
     
     print(f"Patience is now set to {PATIENCE}")
+
+def change_dropout():
+    if dropout_status == "ACTIVE":
+        dropout_status = "INACTIVE"
+        print(f"Dropout is now set to: {dropout_status}")
+    else: 
+        dropout_status = "ACTIVE"
+        print(f"Dropout is now set to: {dropout_status}")
+
+def see_current_settings():
+    print("Here are your current settings:")
+    print(f"Epochs: {EPOCHS}")
+    print(f"Image Size: {IMAGE_SIZE}")
+    print(f"Batch Size: {BATCH_SIZE}")
+    print(f"Dropout: {dropout_status}")
+    print(f"Patience: {PATIENCE}")
 # ============================================================
 # LEARN FUNCTIONS
 # ============================================================
@@ -707,7 +720,8 @@ settings_menu = {
     "Epochs": change_epochs,
     "Image Size": change_image_size,
     "Batch Size": change_batch_size,
-    "Patience": change_patience
+    "Patience": change_patience,
+    "Dropout": change_dropout
 }
 learn_menu = {
     "Epochs": learn_epochs,
