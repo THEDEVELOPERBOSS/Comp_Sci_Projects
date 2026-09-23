@@ -689,13 +689,17 @@ def learn_image_size():
     
     input("\nPress ENTER when you are finished reading...")
 def learn_batch_size():
-    print("Batch size is ")
-    
+    print("\nBatch size controls how many images are processed by the CNN at one time.")
+    print("A larger batch size can make training faster, \nbut it requires more memory.")
+    print("A smaller batch size uses less memory, \nbut training may take longer.")
+    print("The batch size can also affect how the model learns from the training data.")
     input("\nPress ENTER when you are finished reading...")
 def learn_patience():
-    print("\nPatience is ")
-    
-    input("\nPress ENTER when you are finished reading...")
+    print("\nPatience controls how many training epochs the model waits for improvement.")
+    print("If the validation accuracy stops improving, \nthe model will continue training for the number of epochs set by patience.")
+    print("If there is still no improvement after that, training will stop early.")
+    print("This can save time and help prevent the model from training longer than necessary.")
+    input("\nPress ENTER when you are finished reading...") 
 # ============================================================
 # MENUS
 # ============================================================
