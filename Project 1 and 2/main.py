@@ -4,10 +4,22 @@
 from pathlib import Path
 import tensorflow as tf
 import time
+import subprocess
 from pick import pick
 from coco_builder import build_coco_dataset
 from tabulate import tabulate
+import os 
+# ============================================================
+# Function to clear terminal to make things cleaner
+# ============================================================
+def clear_terminal():
+    subprocess.run(["cls" if os.name == "nt" else "clear"], check=False)
 
+# ============================================================
+# Makes it so that the user has time to actually read/interact with what is happening on screen
+# ============================================================
+def give_time():
+    input("Press enter to return...")
 # ============================================================
 # PROJECT PATHS
 # ============================================================
@@ -646,43 +658,56 @@ def choose_image_size():
 # SETTINGS FUNCTIONS
 # ============================================================
 def change_epochs():
+    clear_terminal()
     global EPOCHS
 
     print("How many epochs do you want?")
     EPOCHS = int(input())
 
     print(f"The model will run for {EPOCHS} epochs")
-
+    
+    give_time()
+    
 def change_image_size():
+    clear_terminal()
     global IMAGE_SIZE
 
     IMAGE_SIZE = choose_image_size()
 
+    give_time()
+    
 def change_batch_size():
+    clear_terminal()
     global BATCH_SIZE
 
     print("Batch size selection is not implemented yet.")
 
+    give_time()
+    
 def change_patience():
+    clear_terminal()
     global PATIENCE
     print("What would you like to change patience too?")
     PATIENCE = int(input())
     
     print(f"Patience is now set to {PATIENCE}")
 
+    give_time()
 def change_dropout():
+    clear_terminal()
     global dropout_status
     if dropout_status == "ACTIVE":
         dropout_status = "INACTIVE"
         print(f"\nDropout is now set to: {dropout_status}")
         
-        input("\nPress enter to return to the main menu...")
+        give_time()
     else: 
         dropout_status = "ACTIVE"
         print(f"\nDropout is now set to: {dropout_status}")
         
-        input("\nPress enter to return to the main menu...")
+        give_time()
 def see_current_settings():
+    clear_terminal()
     global dropout_status
     print("\nHere are your current settings:")
     print(f"Epochs: {EPOCHS}")
@@ -691,35 +716,45 @@ def see_current_settings():
     print(f"Dropout: {dropout_status}")
     print(f"Patience: {PATIENCE}")
     
-    input("\nPress Enter to return to the main menu...")
+    give_time()
 # ============================================================
 # LEARN FUNCTIONS
 # ============================================================
 def learn_epochs():
+    clear_terminal()
     global early_stopping_callback
     print("\nEpochs are the amount of times it will train before the model gets tested.\n")
     print(f"The model is also designed to stop training if no improvement is made in {PATIENCE} runs")
     
-    input("\nPress ENTER when you are finished reading...")
+    give_time()
+    
 def learn_image_size():
+    clear_terminal()
     print("\nEvery image is resized to the image size in pixels before being given to the CNN.")
     print("Neural networks need their input images to have the same dimensions.")
     print("A larger image size can contain more visual information, \nwhich may help the CNN recognize small details.")
     print("However, larger images require more memory and take longer to process.")
     
-    input("\nPress ENTER when you are finished reading...")
+    give_time()
+
 def learn_batch_size():
+    clear_terminal()
     print("\nBatch size controls how many images are processed by the CNN at one time.")
     print("A larger batch size can make training faster, \nbut it requires more memory.")
     print("A smaller batch size uses less memory, \nbut training may take longer.")
     print("The batch size can also affect how the model learns from the training data.")
-    input("\nPress ENTER when you are finished reading...")
+    
+    give_time()
+    
 def learn_patience():
+    clear_terminal()
     print("\nPatience controls how many training epochs the model waits for improvement.")
     print("If the validation accuracy stops improving, \nthe model will continue training for the number of epochs set by patience.")
     print("If there is still no improvement after that, training will stop early.")
     print("This can save time and help prevent the model from training longer than necessary.")
-    input("\nPress ENTER when you are finished reading...") 
+    
+    give_time()
+    
 # ============================================================
 # MENUS
 # ============================================================
@@ -738,6 +773,7 @@ learn_menu = {
 }
 def main():
     while True:
+        clear_terminal()
         # First UI. Maybe add a way to reset to defaults.
         user_input = (
             "Would you like to: \n"
@@ -758,6 +794,7 @@ def main():
 
         # Defaults
         if option == "Defaults":
+            clear_terminal()
             print("Defaults selected. Beginning training run")
             build_coco_dataset()
             train_data = load_training_data()
@@ -773,6 +810,7 @@ def main():
 
         # Change settings
         elif option == "Change Settings":
+            clear_terminal()
             user_input = "What would you like to change? "
             options = ["Epochs", "Image Size", "Batch Size", "Dropout","Patience"]
             option, index = pick(options, user_input, indicator="=>", default_index=0)
@@ -783,13 +821,15 @@ def main():
             see_current_settings()
 
         elif option == "Learn":
+            clear_terminal()
             user_input = "What would you like to learn about? "
             options = ["Epochs", "Image Size", "Batch Size", "Patience"]
             option, index = pick(options, user_input, indicator="=>", default_index=0)
             
             learn_menu[option]()
         elif option == "Saved settings":
+            clear_terminal()
             print("Saved settings menu is not implemented yet.")
             
-            input("\nPress Enter to return to the main menu...")
+            give_time()
 main()
