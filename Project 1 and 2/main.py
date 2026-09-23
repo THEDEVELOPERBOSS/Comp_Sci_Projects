@@ -671,20 +671,27 @@ def change_patience():
     print(f"Patience is now set to {PATIENCE}")
 
 def change_dropout():
+    global dropout_status
     if dropout_status == "ACTIVE":
         dropout_status = "INACTIVE"
-        print(f"Dropout is now set to: {dropout_status}")
+        print(f"\nDropout is now set to: {dropout_status}")
+        
+        input("\nPress enter to return to the main menu...")
     else: 
         dropout_status = "ACTIVE"
-        print(f"Dropout is now set to: {dropout_status}")
-
+        print(f"\nDropout is now set to: {dropout_status}")
+        
+        input("\nPress enter to return to the main menu...")
 def see_current_settings():
-    print("Here are your current settings:")
+    global dropout_status
+    print("\nHere are your current settings:")
     print(f"Epochs: {EPOCHS}")
     print(f"Image Size: {IMAGE_SIZE}")
     print(f"Batch Size: {BATCH_SIZE}")
     print(f"Dropout: {dropout_status}")
     print(f"Patience: {PATIENCE}")
+    
+    input("\nPress Enter to return to the main menu...")
 # ============================================================
 # LEARN FUNCTIONS
 # ============================================================
@@ -767,17 +774,13 @@ def main():
         # Change settings
         elif option == "Change Settings":
             user_input = "What would you like to change? "
-            options = ["Epochs", "Image Size", "Batch Size", "Patience"]
+            options = ["Epochs", "Image Size", "Batch Size", "Dropout","Patience"]
             option, index = pick(options, user_input, indicator="=>", default_index=0)
 
             settings_menu[option]()
 
         elif option == "See current settings":
-            print("Here are your current settings:")
-            print(f"Epochs: {EPOCHS}")
-            print(f"Image Size: {IMAGE_SIZE}")
-            print(f"Batch Size: {BATCH_SIZE}")
-            print(f"Patience: {PATIENCE}")
+            see_current_settings()
 
         elif option == "Learn":
             user_input = "What would you like to learn about? "
@@ -787,6 +790,6 @@ def main():
             learn_menu[option]()
         elif option == "Saved settings":
             print("Saved settings menu is not implemented yet.")
-
-
+            
+            input("\nPress Enter to return to the main menu...")
 main()
