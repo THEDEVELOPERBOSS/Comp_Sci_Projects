@@ -719,14 +719,17 @@ def change_batch_size():
     clear_terminal()
     global BATCH_SIZE
 
-    print("Batch size selection is not implemented yet.")
+    print("What would you like to change batch size to?")
+    BATCH_SIZE = int(input)
+    
+    print(f"Batch size is now set to {BATCH_SIZE}")
 
     give_time()
     
 def change_patience():
     clear_terminal()
     global PATIENCE
-    print("What would you like to change patience too?")
+    print("What would you like to change patience to?")
     PATIENCE = int(input())
     
     print(f"Patience is now set to {PATIENCE}")
