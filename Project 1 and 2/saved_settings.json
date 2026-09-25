@@ -1,5 +1,5 @@
 {
-    "Fast train": {
+    "Defaults": {
         "epochs": 30,
         "image_size": [
             160,
