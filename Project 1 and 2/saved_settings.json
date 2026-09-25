@@ -1,0 +1,12 @@
+{
+    "Fast train": {
+        "epochs": 30,
+        "image_size": [
+            160,
+            160
+        ],
+        "batch_size": 32,
+        "patience": 3,
+        "dropout": "INACTIVE"
+    }
+}

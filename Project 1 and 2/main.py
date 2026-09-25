@@ -9,6 +9,7 @@ from pick import pick
 from coco_builder import build_coco_dataset
 from tabulate import tabulate
 import os 
+import json 
 # ============================================================
 # Function to clear terminal to make things cleaner
 # ============================================================
@@ -32,6 +33,8 @@ def give_time():
 
 PROJECT_DIR = Path(__file__).resolve().parent
 
+SETTINGS_FILE = PROJECT_DIR / "saved_settings.json"
+
 DATASET_DIR = PROJECT_DIR / "dataset"
 
 TRAIN_DIR = DATASET_DIR / "classification" / "train"
@@ -42,6 +45,18 @@ TEST_DIR = DATASET_DIR / "classification" / "test"
 
 MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
 
+def load_saved_settings():
+
+    if not SETTINGS_FILE.exists():
+        return {}
+
+    with open(SETTINGS_FILE, "r") as file:
+        return json.load(file)
+
+def save_saved_settings(saved_settings):
+
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(saved_settings, file, indent=4)
 
 # ============================================================
 # SETTINGS
@@ -108,12 +123,36 @@ EPOCHS = 30
 # ============================================================
 dropout_status = "INACTIVE"
 # ============================================================
+# Load saved settings
+# ============================================================
+saved_settings = load_saved_settings()
+# ============================================================
 # BUILD / CHECK DATASET
 # ============================================================
-    
+
 build_coco_dataset()
+# ============================================================
+# Save current settings function 
+# ============================================================
+def save_current_settings():
 
+    global saved_settings
 
+    name = input("\nWhat would you like to name these settings? ")
+
+    saved_settings[name] = {
+        "epochs": EPOCHS,
+        "image_size": list(IMAGE_SIZE),
+        "batch_size": BATCH_SIZE,
+        "patience": PATIENCE,
+        "dropout": dropout_status
+    }
+
+    save_saved_settings(saved_settings)
+
+    print(f"\n'{name}' has been saved.")
+
+    give_time()
 # ============================================================
 # LOAD TRAINING DATA
 # ============================================================
@@ -717,6 +756,81 @@ def see_current_settings():
     print(f"Patience: {PATIENCE}")
     
     give_time()
+def saved_settings_menu():
+    
+    global EPOCHS
+    global IMAGE_SIZE
+    global BATCH_SIZE
+    global PATIENCE
+    global dropout_status
+
+    while True:
+
+        clear_terminal()
+
+        print("Saved Settings:\n")
+
+        if not saved_settings:
+            print("No saved settings yet.")
+        else:
+            for name in saved_settings:
+                print(f"- {name}")
+
+        print("\nWhat would you like to do?")
+
+        options = [
+            "Load saved settings",
+            "Create new saved settings",
+            "Back"
+        ]
+
+        choice, index = pick(
+            options,
+            "Select an option:",
+            indicator="=>",
+            default_index=0
+        )
+
+        if choice == "Create new saved settings":
+
+            clear_terminal()
+
+            save_current_settings()
+
+        elif choice == "Load saved settings":
+
+            if not saved_settings:
+                clear_terminal()
+                print("There are no saved settings to load.")
+                give_time()
+                continue
+
+            names = list(saved_settings.keys())
+
+            selected_name, index = pick(
+                names,
+                "Choose saved settings:",
+                indicator="=>",
+                default_index=0
+            )
+
+            settings = saved_settings[selected_name]
+
+            EPOCHS = settings["epochs"]
+            IMAGE_SIZE = tuple(settings["image_size"])
+            BATCH_SIZE = settings["batch_size"]
+            PATIENCE = settings["patience"]
+            dropout_status = settings["dropout"]
+
+            clear_terminal()
+
+            print(f"Loaded '{selected_name}'.")
+
+            give_time()
+
+        elif choice == "Back":
+
+            return
 # ============================================================
 # LEARN FUNCTIONS
 # ============================================================
@@ -828,8 +942,5 @@ def main():
             
             learn_menu[option]()
         elif option == "Saved settings":
-            clear_terminal()
-            print("Saved settings menu is not implemented yet.")
-            
-            give_time()
+            saved_settings_menu()
 main()
