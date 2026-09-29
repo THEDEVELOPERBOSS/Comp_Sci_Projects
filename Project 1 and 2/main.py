@@ -9,7 +9,7 @@ from pick import pick
 from coco_builder import build_coco_dataset
 from tabulate import tabulate
 import os 
-import json 
+import json
 # ============================================================
 # Function to clear terminal to make things cleaner
 # ============================================================
