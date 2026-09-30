@@ -14,7 +14,7 @@ import json
 # Function to clear terminal to make things cleaner
 # ============================================================
 def clear_terminal():
-    subprocess.run(["cls" if os.name == "nt" else "clear"], check=False)
+    print("\033[2J\033[H", end="")
 
 # ============================================================
 # Makes it so that the user has time to actually read/interact with what is happening on screen
