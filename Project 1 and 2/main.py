@@ -889,12 +889,12 @@ def create_new_profile():
             )
 
         # Create the profile
-        saved_settings[name] = {
-            "epochs": epochs,
-            "image_size": list(image_size),
-            "batch_size": batch_size,
-            "patience": patience,
-            "dropout": dropout
+        saved_settings[profile["name"]] = {
+            "epochs": profile["epochs"],
+            "image_size": profile["image_size"],
+            "batch_size": profile["batch_size"],
+            "patience": profile["patience"],
+            "dropout": profile["dropout"]
         }
 
         # Save it to JSON
