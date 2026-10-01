@@ -817,69 +817,94 @@ def create_new_profile():
 
     global saved_settings
 
-    clear_terminal()
+    step = 0
 
-    print("Create New Profile\n")
-
-    # Profile name
-    name = input("What would you like to name this profile? ")
-
-    # Epochs
-    clear_terminal()
-    print("Create New Profile\n")
-    print("How many epochs would you like?")
-    epochs = int(input("> "))
-
-    # Image size
-    clear_terminal()
-    print("Create New Profile\n")
-    print("Choose an image size:")
-
-    image_size = choose_image_size()
-
-    # Batch size
-    clear_terminal()
-    print("Create New Profile\n")
-    print("What batch size would you like?")
-    batch_size = int(input("> "))
-
-    # Patience
-    clear_terminal()
-    print("Create New Profile\n")
-    print("What patience would you like?")
-    patience = int(input("> "))
-
-    # Dropout
-    clear_terminal()
-    print("Create New Profile\n")
-    print("Would you like dropout to be active?")
-
-    dropout_options = ["ACTIVE", "INACTIVE"]
-
-    dropout, index = pick(
-        dropout_options,
-        "Select dropout setting:",
-        indicator="=>",
-        default_index=1
-    )
-
-    # Create the profile
-    saved_settings[name] = {
-        "epochs": epochs,
-        "image_size": list(image_size),
-        "batch_size": batch_size,
-        "patience": patience,
-        "dropout": dropout
+    profile = {
+        "name": "",
+        "epochs": None,
+        "image_size": None,
+        "batch_size": None,
+        "patience": None, 
+        "dropout": None
     }
-
-    # Save it to JSON
-    save_saved_settings(saved_settings)
-
+    
     clear_terminal()
+    while step >= 0 and step <= 5:
+        
+        print("Create New Profile\n")
+        
+        # Profile name
+        if step == 0:
+            name = input("What would you like to name this profile? ")
+        
+        # Epochs
+        elif step == 1:
+            # chekcs to see if the user wants to go back
+            value = input("> ")
+            if value.lower() == "b":
+                step -= 1
+                continue
+            step += 1 
+            
+            clear_terminal()
+            print("Create New Profile\n")
+            print("How many epochs would you like?")
+            epochs = int(input("> "))
+        
+        # Image size
+        elif step == 2:
+            clear_terminal()
+            print("Create New Profile\n")
+            print("Choose an image size:")
 
-    print(f"Profile '{name}' has been created successfully!")
+            image_size = choose_image_size()
 
-    give_time()
+        # Batch size
+        elif step == 3:
+            clear_terminal()
+            print("Create New Profile\n")
+            print("What batch size would you like?")
+            batch_size = int(input("> "))
+
+        # Patience
+        elif step == 4:
+            clear_terminal()
+            print("Create New Profile\n")
+            print("What patience would you like?")
+            patience = int(input("> "))
+
+        # Dropout
+        elif step == 5:
+            clear_terminal()
+            print("Create New Profile\n")
+            print("Would you like dropout to be active?")
+
+            dropout_options = ["ACTIVE", "INACTIVE"]
+
+            dropout, index = pick(
+                dropout_options,
+                "Select dropout setting:",
+                indicator="=>",
+                default_index=1
+            )
+
+        # Create the profile
+        saved_settings[name] = {
+            "epochs": epochs,
+            "image_size": list(image_size),
+            "batch_size": batch_size,
+            "patience": patience,
+            "dropout": dropout
+        }
+
+        # Save it to JSON
+        save_saved_settings(saved_settings)
+
+        clear_terminal()
+
+        print(f"Profile '{name}' has been created successfully!")
+
+        give_time()
 def saved_settings_menu():
     
     global EPOCHS
@@ -930,8 +955,8 @@ def saved_settings_menu():
                 give_time()
                 continue
         
-        elif choice == "Back":
-            pass() # build out a back function and put it everywhere 
+            elif choice == "Back":
+                return
             names = list(saved_settings.keys())
 
             selected_name, index = pick(
