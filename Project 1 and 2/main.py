@@ -836,29 +836,35 @@ def create_new_profile():
         # Profile name
         if step == 0:
             name = input("What would you like to name this profile? ")
-        
+            profile["name"] = name
+            step += 1 
         # Epochs
         elif step == 1:
-            # chekcs to see if the user wants to go back
-            value = input("> ")
-            if value.lower() == "b":
-                step -= 1
-                continue
-            step += 1 
             
             clear_terminal()
             print("Create New Profile\n")
-            print("How many epochs would you like?")
-            epochs = int(input("> "))
+            print(f"How many epochs would you like?\n(Type b to go back)\nDefault:")
+            if profile[epochs] is None:
+                print(30)
+            else:
+                print(profile[epochs])
+            epochs = input("> ")
+            if epochs.lower() == "b":
+                step -= 1
+                continue
+            
+            profile["epochs"] = int(epochs)
+            step += 1 
         
         # Image size
         elif step == 2:
             clear_terminal()
             print("Create New Profile\n")
-            print("Choose an image size:")
-
-            image_size = choose_image_size()
-
+            print("Choose an image size: \n(Type b to go back)\nDefault:")
+            if profile[image_size] != None:
+                image_size = choose_image_size()
+            else:
+                
         # Batch size
         elif step == 3:
             clear_terminal()
