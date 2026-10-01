@@ -10,6 +10,55 @@ from coco_builder import build_coco_dataset
 from tabulate import tabulate
 import os 
 import json
+import platform
+
+# functionality for saving device specifc info 
+def get_device_specs():
+    gpus = tf.config.list_physical_devices("GPU")
+    
+    if gpus:
+        gpu_name = gpus[0].name
+    else:
+        gpu_name = "No GPU detected"
+        
+    specs = {
+        "operating_system": platform.system(),
+        "os_version": platform.version(),
+        "cpu": platform.processor(),
+        "cpu_cores": os.cpu_count(),
+        "gpu": gpu_name
+    }
+    
+    return specs
+# merges hardware records with what settings are currently in place
+def create_run_record(test_accuracy):
+    device_specs = get_device_specs()
+    
+    run_record = {
+        "device": device_specs,
+        "accuracy": test_accuracy, 
+        "settings": {
+            "epochs": EPOCHS,
+            "image_size": IMAGE_SIZE,
+            "batch_size": BATCH_SIZE,
+            "patience": PATIENCE,
+            "dropout": dropout_status
+        }
+    }
+    
+    return run_record
+def save_training_run(run_record):
+    
+    if RUN_HISTORY_FILE.exists():
+        with open(RUN_HISTORY_FILE, "r") as file:
+            runs = json.load(file)
+    else:
+        runs=[]
+    
+    runs.append(run_record)
+    
+    with open(RUN_HISTORY_FILE, "w") as file:
+        json.dump(runs, file, indent = 4)
 # ============================================================
 # Function to clear terminal to make things cleaner
 # ============================================================
@@ -34,6 +83,8 @@ def give_time():
 PROJECT_DIR = Path(__file__).resolve().parent
 
 SETTINGS_FILE = PROJECT_DIR / "saved_settings.json"
+
+RUN_HISTORY_FILE = PROJECT_DIR / "training_runs.json"
 
 DATASET_DIR = PROJECT_DIR / "dataset"
 
@@ -493,7 +544,7 @@ def early_stopping():
     )
     return early_stopping_callback
 
-def train(model, train_data, validation_data, best_model_callback, early_stopping_callback):
+def train(model, train_data, validation_data, best_model_callback, early_stopping_callback):    
     # ============================================================
     # TRAIN
     # ============================================================
@@ -556,13 +607,13 @@ def test_model(model):
 
     print("\nTesting model...")
 
-    test_loss, test_accuracy = model.evaluate(test_data)
+    test_accuracy = model.evaluate(test_data)
 
     print(
         f"\nTest accuracy: "
         f"{test_accuracy * 100:.2f}%"
     )
-    return model 
+    return test_accuracy
 from tabulate import tabulate
 from pick import pick
 
@@ -996,7 +1047,11 @@ def main():
             best_model_callback = training_callbacks()
             early_stopping_callback = early_stopping()
             train(model, train_data, validation_data, best_model_callback, early_stopping_callback)
-            test_model(model)
+            test_accuracy = test_model(model)
+            
+            run_record = create_run_record(test_accuracy)
+            
+            save_training_run(run_record)
 
         # Change settings
         elif option == "Change Settings":
