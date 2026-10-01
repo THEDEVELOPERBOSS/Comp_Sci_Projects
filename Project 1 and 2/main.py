@@ -878,7 +878,9 @@ def saved_settings_menu():
                 print("There are no saved settings to load.")
                 give_time()
                 continue
-
+        
+        elif choice == "Back":
+            pass() # build out a back function and put it everywhere 
             names = list(saved_settings.keys())
 
             selected_name, index = pick(
