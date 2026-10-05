@@ -416,7 +416,7 @@ def build_model(NUM_CLASSES):
         activation="relu"
     ),
     
-   # dropout(),
+    dropout(),
 
     # Final prediction
     tf.keras.layers.Dense(
