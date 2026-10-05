@@ -843,7 +843,9 @@ def create_new_profile():
             
             clear_terminal()
             print("Create New Profile\n")
-            print(f"How many epochs would you like?\n(Type b to go back)\nDefault:")
+            print(f"How many epochs would you like?\n")
+            print("Type b to go back")
+            print("\nDefault:")
             if profile["epochs"] is None:
                 print(30)
             else:
@@ -860,24 +862,19 @@ def create_new_profile():
         elif step == 2:
             clear_terminal()
             print("Create New Profile\n")
-            print(f"Choose an image size: \n(Type b to go back)\nDefault:")
-            if profile["image_size"] != None:
-                print("160 x 160")
-                image_size = choose_image_size()
-            else:
-                print(profile["image_size"])
-            image_size = input("> ")
-            if epochs.lower() == "b":
-                step -= 1 
-                continue 
+            print("Choose an image size:")
+            print("(Type b to go back)\n")
             
-            profile["image_size"] = (image_size)
-            step += 1 
+            image_size = choose_image_size()
+
+            profile["image_size"] = image_size
+            step += 1
         # Batch size
         elif step == 3:
             clear_terminal()
             print("Create New Profile\n")
-            print("What batch size would you like\n(Type b to go back)\nDefault:")
+            print("What batch size would you like\n")
+            print("Type b to go back")
             if profile["batch_size"] != None:
                 print(32)
                 change_batch_size
@@ -888,13 +885,15 @@ def create_new_profile():
                 step -= 1 
                 continue
             
-            profile["batch_size"] = batch_size
+            profile["batch_size"] = int(batch_size)
             step += 1 
         # Patience
         elif step == 4:
             clear_terminal()
             print("Create New Profile\n")
-            print("What patience would you like?\n(Type b to go back)\nDefault:")
+            print("What patience would you like?\n")
+            print("Type b to go back)")
+            print("\nDefault:")
             if profile["patience"] != None:
                 print(3)
                 change_patience
@@ -905,35 +904,27 @@ def create_new_profile():
                 step -= 1 
                 continue
             
-            profile["patience"] = patience
+            profile["patience"] = int(patience)
             step += 1 
 
         # Dropout
         elif step == 5:
             clear_terminal()
             print("Create New Profile\n")
-            print("Would you like dropout to be active?\n(Type b to go back)\nDefault:")
-            if profile["dropout"] != None:
-                print("INACTIVE")
-                change_dropout
-            else:
-                print(profile["dropout"])
-            dropout = input("> ")
-            if dropout.lower() == "b":
-                step -= 1
-                continue 
+            print("Would you like dropout to be active?")
+            print("\n(Type b to go back)")
+            
+            dropout_options = ["ACTIVE", "INACTIVE"]
+            
+            dropout, index = pick(
+                dropout_options, 
+                "Select dropout setting:",
+                indicator = "=>",
+                default_index = 1
+            )
             
             profile["dropout"] = dropout
             step += 1 
-            dropout_options = ["ACTIVE", "INACTIVE"]
-
-            dropout, index = pick(
-                dropout_options,
-                "Select dropout setting:",
-                indicator="=>",
-                default_index=1
-            )
-
         # Create the profile
         saved_settings[profile["name"]] = {
             "epochs": profile["epochs"],

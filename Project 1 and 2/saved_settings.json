@@ -15,5 +15,15 @@
         "batch_size": null,
         "patience": null,
         "dropout": null
+    },
+    "Test Profile": {
+        "epochs": 5,
+        "image_size": [
+            160,
+            160
+        ],
+        "batch_size": 16,
+        "patience": 2,
+        "dropout": "ACTIVE"
     }
 }
