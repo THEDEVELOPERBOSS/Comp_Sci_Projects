@@ -1124,4 +1124,5 @@ def main():
             learn_menu[option]()
         elif option == "Saved settings":
             saved_settings_menu()
-main()
+if __name__ == "__main__":
+    main()
