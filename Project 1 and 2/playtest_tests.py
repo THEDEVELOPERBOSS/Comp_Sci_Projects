@@ -38,7 +38,7 @@ class FakeModel:
         return object()
 
     def evaluate(self, *args, **kwargs):
-        return self.evaluate_result
+        return {"loss": self.evaluate_result[0], "accuracy": self.evaluate_result[1]}
 
 
 class FakeLayer:
