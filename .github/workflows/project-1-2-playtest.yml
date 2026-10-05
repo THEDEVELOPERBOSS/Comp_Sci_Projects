@@ -1,0 +1,30 @@
+name: Project 1 and 2 Playtest
+
+on:
+  push:
+    branches:
+      - playtest/project-1-2
+  workflow_dispatch:
+
+jobs:
+  playtest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Project 1 and 2
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Compile project Python files
+        run: |
+          python -m py_compile main.py coco_builder.py downloader.py sync_dataset.py
+
+      - name: Run playtest suite
+        run: python -m unittest discover -s . -p "playtest_tests.py" -v

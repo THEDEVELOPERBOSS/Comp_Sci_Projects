@@ -4,7 +4,6 @@
 from pathlib import Path
 import tensorflow as tf
 import time
-import subprocess
 from pick import pick
 from coco_builder import build_coco_dataset
 from tabulate import tabulate
@@ -417,7 +416,7 @@ def build_model(NUM_CLASSES):
         activation="relu"
     ),
     
-   # dropout(),
+    dropout(),
 
     # Final prediction
     tf.keras.layers.Dense(
@@ -607,17 +606,14 @@ def test_model(model):
 
     print("\nTesting model...")
 
-    test_accuracy = model.evaluate(test_data)
+    results = model.evaluate(test_data, return_dict=True)
+    test_accuracy = results["accuracy"]
 
     print(
         f"\nTest accuracy: "
         f"{test_accuracy * 100:.2f}%"
     )
     return test_accuracy
-from tabulate import tabulate
-from pick import pick
-
-
 def choose_image_size():
 
     # ========================================================
@@ -862,8 +858,7 @@ def create_new_profile():
         elif step == 2:
             clear_terminal()
             print("Create New Profile\n")
-            print("Choose an image size:")
-            print("(Type b to go back)\n")
+            print("Choose an image size:\n")
             
             image_size = choose_image_size()
 
@@ -875,9 +870,8 @@ def create_new_profile():
             print("Create New Profile\n")
             print("What batch size would you like\n")
             print("Type b to go back")
-            if profile["batch_size"] != None:
+            if profile["batch_size"] is None:
                 print(32)
-                change_batch_size
             else:
                 print(profile["batch_size"])
             batch_size = input("> ")
@@ -894,9 +888,8 @@ def create_new_profile():
             print("What patience would you like?\n")
             print("Type b to go back)")
             print("\nDefault:")
-            if profile["patience"] != None:
+            if profile["patience"] is None:
                 print(3)
-                change_patience
             else:
                 print(profile["patience"])
             patience = input("> ")
@@ -911,8 +904,7 @@ def create_new_profile():
         elif step == 5:
             clear_terminal()
             print("Create New Profile\n")
-            print("Would you like dropout to be active?")
-            print("\n(Type b to go back)")
+            print("Would you like dropout to be active?\n")
             
             dropout_options = ["ACTIVE", "INACTIVE"]
             
@@ -1132,4 +1124,5 @@ def main():
             learn_menu[option]()
         elif option == "Saved settings":
             saved_settings_menu()
-main()
+if __name__ == "__main__":
+    main()
