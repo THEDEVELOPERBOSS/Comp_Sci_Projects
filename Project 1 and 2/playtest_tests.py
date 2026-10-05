@@ -229,7 +229,7 @@ class TestProjectOneAndTwo(unittest.TestCase):
         self.main.dropout_status = "ACTIVE"
         model = self.main.build_model(3)
         self.assertTrue(
-            any(isinstance(layer, FakeLayer) and layer.kwargs.get("rate") == 0.5
+            any(isinstance(layer, FakeLayer) and layer.args == (0.5,)
                 for layer in model.layers),
             "Dropout setting is exposed but does not affect the model",
         )
