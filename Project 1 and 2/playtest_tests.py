@@ -255,6 +255,18 @@ class TestProjectOneAndTwo(unittest.TestCase):
                     return 0.91
                 if name == "create_run_record":
                     return {"accuracy": args[0]}
+                if name == "prepare_data":
+                    return ("train", "validation", 2)
+                if name == "build_model":
+                    return FakeModel()
+                if name == "compile":
+                    return args[0]
+                if name == "training_callbacks":
+                    return object()
+                if name == "early_stopping":
+                    return object()
+                if name == "train":
+                    return args[0]
                 return args[0] if args else None
             return wrapper
 
