@@ -771,7 +771,7 @@ def change_batch_size():
     global BATCH_SIZE
 
     print("What would you like to change batch size to?")
-    BATCH_SIZE = int(input)
+    BATCH_SIZE = int(input())
     
     print(f"Batch size is now set to {BATCH_SIZE}")
 
@@ -847,7 +847,7 @@ def create_new_profile():
             if profile["epochs"] is None:
                 print(30)
             else:
-                print(profile[epochs])
+                print(profile["epochs"])
             epochs = input("> ")
             if epochs.lower() == "b":
                 step -= 1
@@ -865,7 +865,7 @@ def create_new_profile():
                 print("160 x 160")
                 image_size = choose_image_size()
             else:
-                print(profile[image_size])
+                print(profile["image_size"])
             image_size = input("> ")
             if epochs.lower() == "b":
                 step -= 1 
@@ -878,17 +878,17 @@ def create_new_profile():
             clear_terminal()
             print("Create New Profile\n")
             print("What batch size would you like\n(Type b to go back)\nDefault:")
-            if profile["batch_size'] != None:
+            if profile["batch_size"] != None:
                 print(32)
                 change_batch_size
             else:
-                print(profile[batch_size])
+                print(profile["batch_size"])
             batch_size = input("> ")
             if batch_size.lower() == "b":
                 step -= 1 
                 continue
             
-            profile("batch_size") = batch_size
+            profile["batch_size"] = batch_size
             step += 1 
         # Patience
         elif step == 4:
@@ -899,13 +899,13 @@ def create_new_profile():
                 print(3)
                 change_patience
             else:
-                print(profile[patience])
+                print(profile["patience"])
             patience = input("> ")
             if patience.lower() == "b":
                 step -= 1 
                 continue
             
-            profile("patience") = patience
+            profile["patience"] = patience
             step += 1 
 
         # Dropout
@@ -917,7 +917,7 @@ def create_new_profile():
                 print("INACTIVE")
                 change_dropout
             else:
-                print(profile[dropout])
+                print(profile["dropout"])
             dropout = input("> ")
             if dropout.lower() == "b":
                 step -= 1
@@ -1000,9 +1000,7 @@ def saved_settings_menu():
                 print("There are no saved settings to load.")
                 give_time()
                 continue
-        
-            elif choice == "Back":
-                return
+            
             names = list(saved_settings.keys())
 
             selected_name, index = pick(
@@ -1034,7 +1032,6 @@ def saved_settings_menu():
 # ============================================================
 def learn_epochs():
     clear_terminal()
-    global early_stopping_callback
     print("\nEpochs are the amount of times it will train before the model gets tested.\n")
     print(f"The model is also designed to stop training if no improvement is made in {PATIENCE} runs")
     
