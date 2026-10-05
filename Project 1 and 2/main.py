@@ -923,7 +923,7 @@ def create_new_profile():
                 step -= 1
                 continue 
             
-            profile("dropout") = dropout
+            profile["dropout"] = dropout
             step += 1 
             dropout_options = ["ACTIVE", "INACTIVE"]
 
@@ -1105,7 +1105,6 @@ def main():
         if option == "Defaults":
             clear_terminal()
             print("Defaults selected. Beginning training run")
-            build_coco_dataset()
             train_data = load_training_data()
             validation_data = load_validation_data()
             train_data, validation_data, NUM_CLASSES = prepare_data(train_data, validation_data)
