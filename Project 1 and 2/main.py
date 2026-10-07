@@ -6,6 +6,7 @@ import tensorflow as tf
 import time
 from pick import pick
 from coco_builder import build_coco_dataset
+from sync_dataset import pull 
 from tabulate import tabulate
 import os 
 import json
@@ -177,8 +178,9 @@ dropout_status = "INACTIVE"
 # ============================================================
 saved_settings = load_saved_settings()
 # ============================================================
-# BUILD / CHECK DATASET
+# BUILD / CHECK DATASETS
 # ============================================================
+pull() # uses sync_dataset.py function 
 
 build_coco_dataset()
 # ============================================================

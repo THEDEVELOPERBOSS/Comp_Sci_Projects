@@ -4,3 +4,4 @@ tqdm
 Pillow
 pick
 tabulate
+huggingface_hub

@@ -1,6 +1,13 @@
 import subprocess
 import sys
 from pathlib import Path
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="THEDEVELOPERBOSS/Image_classification",
+    repo_type="dataset",
+    local_dir="dataset"
+)
 
 REPO = "THEDEVELOPERBOSS/Image_classification"
 DATASET = Path(__file__).parent / "dataset"
