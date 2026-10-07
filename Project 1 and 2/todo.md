@@ -56,23 +56,12 @@ Project 1 and 2/
 # Website
 
 - [ ] Remove dead `"Avery Chen"` replacement code
-- [ ] Check JavaScript for unused code
-- [ ] Check JavaScript for broken functionality
-- [ ] Check CSS for unused code
-- [ ] Check for broken links
-- [ ] Check desktop layout
-- [ ] Check mobile layout
-- [ ] Review website wording
-- [ ] Test website locally
-- [ ] Fix issues found
-- [ ] Open PR
-- [ ] Merge PR
 
 ---
 
 # Repository-Wide Project Audit
 
-## For Each Project
+## For Image recognition 
 
 - [ ] Identify how the project is supposed to work
 - [ ] Run the project from a clean environment
