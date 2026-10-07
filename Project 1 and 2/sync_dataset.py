@@ -13,7 +13,7 @@ def run(command):
     result = subprocess.run(command)
 
     if result.returncode != 0:
-        print("\n❌ Command failed.")
+        print("\nCommand failed.")
         sys.exit(result.returncode)
 
 
@@ -56,7 +56,7 @@ def find_hf():
     if user_scripts.exists():
         return str(user_scripts)
 
-    print("❌ Hugging Face CLI (hf.exe) was not found.")
+    print("Hugging Face CLI (hf.exe) was not found.")
     print("Install it with:")
     print("pip install -U huggingface_hub")
     sys.exit(1)
@@ -93,13 +93,13 @@ def find_hf():
 
 def push():
     if not DATASET.exists():
-        print(f"❌ Dataset folder not found:")
+        print(f"Dataset folder not found:")
         print(DATASET)
         return
 
     hf = find_hf()
 
-    print("⬆️  Syncing local dataset → Hugging Face...")
+    print("Syncing local dataset → Hugging Face...")
 
     if isinstance(hf, list):
         command = hf + [
@@ -123,7 +123,7 @@ def push():
 
     run(command)
 
-    print("\n✅ Dataset pushed successfully.")
+    print("\nDataset pushed successfully.")
 
 
 def pull():
@@ -131,7 +131,7 @@ def pull():
 
     hf = find_hf()
 
-    print("⬇️ Syncing Hugging Face → local dataset...")
+    print("Syncing Hugging Face → local dataset...")
 
     if isinstance(hf, list):
         command = hf + [
@@ -153,7 +153,7 @@ def pull():
 
     run(command)
 
-    print("\n✅ Dataset pulled successfully.")
+    print("\nDataset pulled successfully.")
 
 
 def main():
@@ -170,7 +170,7 @@ def main():
     elif command == "pull":
         pull()
     else:
-        print("❌ Unknown command.")
+        print(" Unknown command.")
         print("Use:")
         print("  python sync_dataset.py push")
         print("  python sync_dataset.py pull")
