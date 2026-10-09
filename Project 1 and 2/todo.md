@@ -21,11 +21,6 @@
 - [ ] Add test for sync → COCO build order
 - [ ] Add test confirming COCO build does not run when sync fails
 - [ ] Run the complete Project 1 & 2 playtest
-- [ ] Run GitHub Actions
-- [ ] Fix any issues found by CI
-- [ ] Open PR
-- [ ] Review PR
-- [ ] Merge PR
 
 ## Project 1 & 2 Code Cleanup
 
@@ -33,7 +28,7 @@
 - [ ] Review `sync_dataset.py` for unused/dead code
 - [ ] Review `coco_builder.py` for unused/dead code
 - [ ] Review `downloader.py` for unused/dead code
-- [ ] Review imports across Project 1 & 2
+- [X] Review imports across Project 1 & 2
 - [ ] Review error handling
 - [ ] Review generated files
 - [ ] Review `.gitignore`
@@ -48,8 +43,6 @@ Project 1 and 2/
 ├── sync_dataset.py
 └── coco_builder.py
 - [ ] Run full playtest after cleanup
-- [ ] Open cleanup PR
-- [ ] Merge cleanup PR
 
 ---
 
@@ -79,9 +72,6 @@ Project 1 and 2/
 - [ ] Fix confirmed bugs
 - [ ] Run tests again
 - [ ] Run the complete playtest again
-- [ ] Open PR
-- [ ] Review PR
-- [ ] Merge PR
 
 ---
 
