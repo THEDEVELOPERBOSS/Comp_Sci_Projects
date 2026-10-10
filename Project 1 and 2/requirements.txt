@@ -5,3 +5,4 @@ Pillow
 pick
 tabulate
 huggingface_hub
+streamlit pillow
