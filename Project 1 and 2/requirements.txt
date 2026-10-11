@@ -1,4 +1,8 @@
-streamlit
 tensorflow
-numpy
+requests
+tqdm
 Pillow
+pick
+tabulate
+huggingface_hub
+streamlit
