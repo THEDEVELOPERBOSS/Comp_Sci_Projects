@@ -47,18 +47,52 @@ def create_run_record(test_accuracy):
     }
     
     return run_record
+
 def save_training_run(run_record):
-    
+    """Save a training run without crashing if the history file is empty or corrupted."""
+
+    runs = []
+
+    # Load previous training runs if the file exists.
     if RUN_HISTORY_FILE.exists():
-        with open(RUN_HISTORY_FILE, "r") as file:
-            runs = json.load(file)
-    else:
-        runs=[]
-    
+        try:
+            with open(RUN_HISTORY_FILE, "r", encoding="utf-8") as file:
+                content = file.read().strip()
+
+            if content:
+                runs = json.loads(content)
+            else:
+                raise json.JSONDecodeError(
+                    "Training history file is empty", "", 0
+                )
+
+        except json.JSONDecodeError:
+            # Preserve the damaged file before creating a new history.
+            backup_path = RUN_HISTORY_FILE.with_name(
+                "training_runs_corrupt_backup.json"
+            )
+
+            if not backup_path.exists():
+                import shutil
+                shutil.copy2(RUN_HISTORY_FILE, backup_path)
+
+            print(
+                "\nWarning: Training history was empty or invalid JSON."
+            )
+            print(f"A backup was saved to: {backup_path}")
+            print("Starting a new training history.")
+
+            runs = []
+
+    # Add the latest training run.
     runs.append(run_record)
-    
-    with open(RUN_HISTORY_FILE, "w") as file:
-        json.dump(runs, file, indent = 4)
+
+    # Save the updated history.
+    with open(RUN_HISTORY_FILE, "w", encoding="utf-8") as file:
+        json.dump(runs, file, indent=4)
+
+    print("\nTraining run saved successfully.")
+
 # ============================================================
 # Function to clear terminal to make things cleaner
 # ============================================================
@@ -86,15 +120,46 @@ SETTINGS_FILE = PROJECT_DIR / "saved_settings.json"
 
 RUN_HISTORY_FILE = PROJECT_DIR / "training_runs.json"
 
+
 DATASET_DIR = PROJECT_DIR / "dataset"
 
+# Original COCO dataset
 TRAIN_DIR = DATASET_DIR / "classification" / "train"
-
 VAL_DIR = DATASET_DIR / "classification" / "val"
-
 TEST_DIR = DATASET_DIR / "classification" / "test"
 
+# Open Images crops
+CROPS_DIR = PROJECT_DIR / "open_images_crops"
+OPEN_IMAGES_TRAIN_DIR = CROPS_DIR / "train"
+OPEN_IMAGES_VAL_DIR = CROPS_DIR / "validation"
+OPEN_IMAGES_TEST_DIR = CROPS_DIR / "test"
+
+# Shared class order for the model
+CLASS_NAMES = [
+    "backpack",
+    "bottle",
+    "car",
+    "couch",
+    "laptop",
+    "mobile_phone",
+    "table",
+    "truck",
+]
+
+# Original dataset calls mobile_phone "phone"
+ORIGINAL_CLASS_NAMES = [
+    "backpack",
+    "bottle",
+    "car",
+    "couch",
+    "laptop",
+    "phone",
+    "table",
+    "truck",
+]
+
 MODEL_PATH = PROJECT_DIR / "image_classifier.keras"
+
 
 def load_saved_settings():
 
@@ -140,7 +205,7 @@ PATIENCE = 3
 # and compare the accuracy and training time.
 #
 # ========================================================
-IMAGE_SIZE = (160, 160)
+IMAGE_SIZE = (128, 128)
 # ========================================================
 # BATCH_SIZE
 #
@@ -205,62 +270,71 @@ def save_current_settings():
     print(f"\n'{name}' has been saved.")
 
     give_time()
-# ============================================================
-# LOAD TRAINING DATA
-# ============================================================
-def load_training_data():
-    print("\nLoading training data...")
 
-    train_data = (
-        tf.keras.utils.image_dataset_from_directory(
-            TRAIN_DIR,
 
-            image_size=IMAGE_SIZE,
+def load_combined_split(original_dir, open_images_dir, split_name, shuffle=False):
+    """Load the original images and Open Images crops together."""
 
-            batch_size=BATCH_SIZE,
+    print(f"\nLoading combined {split_name} data...")
 
-            label_mode="int",
-
-            shuffle=True,
-
-            seed=42
-        )
+    # Load the original COCO dataset.
+    original_data = tf.keras.utils.image_dataset_from_directory(
+        original_dir,
+        image_size=IMAGE_SIZE,
+        batch_size=BATCH_SIZE,
+        label_mode="int",
+        shuffle=False,
+        class_names=ORIGINAL_CLASS_NAMES,
     )
-    return train_data
 
-# ============================================================
-# LOAD VALIDATION DATA
-# ============================================================
+    # Load the Open Images crops.
+    open_images_data = tf.keras.utils.image_dataset_from_directory(
+        open_images_dir,
+        image_size=IMAGE_SIZE,
+        batch_size=BATCH_SIZE,
+        label_mode="int",
+        shuffle=False,
+        class_names=CLASS_NAMES,
+    )
+
+    # Combine both datasets.
+    combined_data = original_data.unbatch().concatenate(
+        open_images_data.unbatch()
+    )
+
+    # Shuffle training images, but keep validation and test ordered.
+    if shuffle:
+        combined_data = combined_data.shuffle(
+            buffer_size=512,
+            seed=42,
+            reshuffle_each_iteration=True,
+        )
+
+    return combined_data.batch(BATCH_SIZE)
+
+def load_training_data():
+    return load_combined_split(
+        TRAIN_DIR,
+        OPEN_IMAGES_TRAIN_DIR,
+        "training",
+        shuffle=True,
+    )
+
 
 def load_validation_data():
-    print("\nLoading validation data...")
-
-    validation_data = (
-        tf.keras.utils.image_dataset_from_directory(
-            VAL_DIR,
-
-            image_size=IMAGE_SIZE,
-
-            batch_size=BATCH_SIZE,
-
-            label_mode="int",
-
-            shuffle=False
-        )
+    return load_combined_split(
+        VAL_DIR,
+        OPEN_IMAGES_VAL_DIR,
+        "validation",
+        shuffle=False,
     )
-    return validation_data
 
 # ============================================================
 # GET CLASS NAMES AND SPEED UP DATA PIPELINE(PREPARE DATA)
 # ============================================================
 def prepare_data(train_data, validation_data):
-    class_names = (
-        train_data.class_names
-    )
-
-    NUM_CLASSES = len(
-        class_names
-    )
+    class_names = CLASS_NAMES
+    NUM_CLASSES = len(class_names)
 
     print("\nClasses:")
 
@@ -300,6 +374,10 @@ def prepare_data(train_data, validation_data):
     return train_data, validation_data, NUM_CLASSES
 def dropout():
     if dropout_status == "ACTIVE":
+        return tf.keras.layers.Dropout(0.5)
+
+    # Return a layer that does nothing when dropout is inactive.
+    return tf.keras.layers.Activation("linear")
         # ========================================================
         # DROPOUT
         # ========================================================
@@ -322,111 +400,57 @@ def dropout():
         # Currently removed due to harming performance as of removing it
         #
         # ========================================================
-
-        return tf.keras.layers.Dropout(0.5)
-    else:
-        return 
          
+
+
 def build_model(NUM_CLASSES):
-    model = tf.keras.Sequential([
-    
-    # ========================================================
-    # DATA AUGMENTATION
-    # ========================================================
-    #
-    # Data augmentation creates slightly different versions
-    # of training images.
-    #
-    # This helps prevent the CNN from simply memorizing the
-    # exact training images. Instead, it learns important
-    # features that help identify each object.
-    #
-    # For example, if the model sees a backpack from one angle,
-    # we want it to still recognize a backpack from a slightly
-    # different angle or position.
-    #
-    # RandomFlip:
-    # Randomly flips some training images horizontally.
-    #
-    # RandomRotation:
-    # Slightly rotates some training images.
-    # The value 0.1 allows a small amount of rotation.
-    #
-    # RandomZoom:
-    # Slightly zooms some training images in or out.
-    #
-    # These changes happen automatically during training.
-    # The original images stored on the computer are NOT changed.
-    #
-    # Data augmentation is only used on training data.
-    # Validation and test images remain unchanged.
-    #
-    # The goal is to make the model better at recognizing
-    # objects it has never seen before.
-    #
-    # ========================================================
-        tf.keras.layers.RandomFlip(
-            "horizontal"
-        ),
+    # Randomly change training images to help prevent overfitting.
+    data_augmentation = tf.keras.Sequential([
+        tf.keras.layers.RandomFlip("horizontal"),
+        tf.keras.layers.RandomRotation(0.1),
+        tf.keras.layers.RandomZoom(0.1),
+    ], name="data_augmentation")
 
-        tf.keras.layers.RandomRotation(
-            0.1
-        ),
-
-        tf.keras.layers.RandomZoom(
-            0.1
-        ),
-
-        # Normalize pixels from 0-255 to 0-1
-        tf.keras.layers.Rescaling(
-            1.0 / 255
-        ),
-
-        # First feature detector
-        tf.keras.layers.Conv2D(
-            32,
-            (3, 3),
-            activation="relu"
-        ),
-
-        tf.keras.layers.MaxPooling2D(),
-
-        # Second feature detector
-        tf.keras.layers.Conv2D(
-            64,
-            (3, 3),
-            activation="relu"
-        ),
-
-        tf.keras.layers.MaxPooling2D(),
-
-        # Third feature detector
-        tf.keras.layers.Conv2D(
-            128, # number of filters
-            (3, 3),
-            activation="relu"
-        ),
-
-        tf.keras.layers.MaxPooling2D(),
-
-    # Convert feature maps into a vector
-    tf.keras.layers.Flatten(),
-
-    # Classification layer
-    tf.keras.layers.Dense(
-        128, # number of neurons
-        activation="relu"
-    ),
-    
-    dropout(),
-
-    # Final prediction
-    tf.keras.layers.Dense(
-        NUM_CLASSES,
-        activation="softmax"
+    # Load MobileNetV2's pretrained visual features.
+    base_model = tf.keras.applications.MobileNetV2(
+        input_shape=(IMAGE_SIZE[0], IMAGE_SIZE[1], 3),
+        include_top=False,
+        weights="imagenet",
     )
 
-    ])
+    # Train only our new classification layers initially.
+    base_model.trainable = False
+
+    inputs = tf.keras.Input(
+        shape=(IMAGE_SIZE[0], IMAGE_SIZE[1], 3)
+    )
+
+    x = data_augmentation(inputs)
+
+    # Convert pixels from 0–255 to -1–1.
+    x = tf.keras.layers.Rescaling(
+        scale=1.0 / 127.5,
+        offset=-1
+    )(x)
+
+    # Extract features without updating MobileNetV2's weights.
+    x = base_model(x, training=False)
+
+    # Reduce the feature maps to a compact feature vector.
+    x = tf.keras.layers.GlobalAveragePooling2D()(x)
+
+    # Add regularization to help reduce overfitting.
+    x = tf.keras.layers.Dropout(0.2)(x)
+
+    # Produce a probability for each class.
+    outputs = tf.keras.layers.Dense(
+        NUM_CLASSES,
+        activation="softmax",
+        name="class_predictions"
+    )(x)
+
+    model = tf.keras.Model(inputs, outputs)
+
     return model
 
 def compile(model):
@@ -591,19 +615,15 @@ def train(model, train_data, validation_data, best_model_callback, early_stoppin
     print("\n[OK] Best model saved to:")
     print(MODEL_PATH)
     return model, train_data, validation_data, best_model_callback, early_stopping_callback
+
 def test_model(model):
-    # ============================================================
-    # TEST MODEL
-    # ============================================================
+    """Test using both datasets."""
 
-    print("\nLoading test data...")
-
-    test_data = tf.keras.utils.image_dataset_from_directory(
-        str(TEST_DIR),
-        image_size=IMAGE_SIZE,
-        batch_size=BATCH_SIZE,
-        label_mode="int",
-        shuffle=False
+    test_data = load_combined_split(
+        TEST_DIR,
+        OPEN_IMAGES_TEST_DIR,
+        "testing",
+        shuffle=False,
     )
 
     print("\nTesting model...")
@@ -611,11 +631,10 @@ def test_model(model):
     results = model.evaluate(test_data, return_dict=True)
     test_accuracy = results["accuracy"]
 
-    print(
-        f"\nTest accuracy: "
-        f"{test_accuracy * 100:.2f}%"
-    )
+    print(f"\nTest accuracy: {test_accuracy * 100:.2f}%")
+
     return test_accuracy
+
 def choose_image_size():
 
     # ========================================================
@@ -1098,9 +1117,20 @@ def main():
             show_model(model)
             best_model_callback = training_callbacks()
             early_stopping_callback = early_stopping()
-            train(model, train_data, validation_data, best_model_callback, early_stopping_callback)
-            test_accuracy = test_model(model)
-            
+            train(
+                model,
+                train_data,
+                validation_data,
+                best_model_callback,
+                early_stopping_callback
+            )
+
+            # Load the best saved model before testing.
+            best_model = tf.keras.models.load_model(MODEL_PATH)
+
+            test_accuracy = test_model(best_model)
+
+                        
             run_record = create_run_record(test_accuracy)
             
             save_training_run(run_record)

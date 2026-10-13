@@ -1,0 +1,22 @@
+[
+    {
+        "device": {
+            "operating_system": "Windows",
+            "os_version": "10.0.26300",
+            "cpu": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+            "cpu_cores": 6,
+            "gpu": "No GPU detected"
+        },
+        "accuracy": 0.10653097182512283,
+        "settings": {
+            "epochs": 30,
+            "image_size": [
+                128,
+                128
+            ],
+            "batch_size": 32,
+            "patience": 3,
+            "dropout": "INACTIVE"
+        }
+    }
+]
