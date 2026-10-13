@@ -6,6 +6,7 @@ Run from this directory with:
 The trained model must exist at image_classifier.keras.
 """
 from pathlib import Path
+import socket
 
 import numpy as np
 import streamlit as st
@@ -31,6 +32,37 @@ CLASS_NAMES = [
 st.set_page_config(page_title="Image Classifier", page_icon="🖼️", layout="centered")
 st.title("Image Classifier")
 st.write("Upload an image and let the trained model predict its class.")
+
+
+def get_local_ip():
+    """Find the IPv4 address other devices on the local network can use."""
+    try:
+        # This selects the network interface used for outbound traffic.
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as network_socket:
+            network_socket.connect(("8.8.8.8", 80))
+            return network_socket.getsockname()[0]
+    except OSError:
+        # This fallback can help on networks without outbound connectivity.
+        try:
+            for address in socket.gethostbyname_ex(socket.gethostname())[2]:
+                if not address.startswith("127."):
+                    return address
+        except OSError:
+            pass
+    return None
+
+
+local_ip = get_local_ip()
+if local_ip:
+    st.info(
+        "To open this classifier on another device connected to the same "
+        f"trusted network, visit: http://{local_ip}:8501"
+    )
+else:
+    st.warning(
+        "Could not detect this computer's network IP address. "
+        "On Linux, run 'hostname -I'; on Windows, run 'ipconfig'."
+    )
 
 if not MODEL_PATH.is_file():
     st.error(
