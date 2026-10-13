@@ -11,6 +11,10 @@ from tabulate import tabulate
 import os 
 import json
 import platform
+import socket
+import subprocess
+import sys
+import webbrowser
 
 # functionality for saving device specifc info 
 def get_device_specs():
@@ -104,6 +108,80 @@ def clear_terminal():
 # ============================================================
 def give_time():
     input("Press enter to return...")
+def get_local_ip():
+    """Return the local network IP address other devices can use."""
+    try:
+        # Identify the network interface used for outbound traffic.
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as network_socket:
+            network_socket.connect(("8.8.8.8", 80))
+            return network_socket.getsockname()[0]
+    except OSError:
+        try:
+            addresses = socket.gethostbyname_ex(socket.gethostname())[2]
+            for address in addresses:
+                if not address.startswith("127."):
+                    return address
+        except OSError:
+            pass
+    return None
+
+
+def deploy_image_classifier():
+    """Start the Streamlit classifier and show the URL for other devices."""
+    clear_terminal()
+    app_path = PROJECT_DIR / "image_classifier_app.py"
+
+    if not app_path.is_file():
+        print("The image classifier interface was not found:")
+        print(app_path)
+        give_time()
+        return
+
+    if not MODEL_PATH.is_file():
+        print("The trained model was not found.")
+        print(f"Train the model first so this file exists: {MODEL_PATH}")
+        give_time()
+        return
+
+    local_ip = get_local_ip()
+    port = 8501
+    local_url = f"http://localhost:{port}"
+
+    print("Starting the image classifier web server...")
+    try:
+        subprocess.Popen(
+            [
+                sys.executable, "-m", "streamlit", "run", str(app_path),
+                "--server.address", "0.0.0.0",
+                "--server.port", str(port),
+                "--server.headless", "true",
+            ],
+            cwd=str(PROJECT_DIR),
+        )
+    except OSError as error:
+        print(f"Could not start Streamlit: {error}")
+        print("Check that Streamlit is installed in this Python environment.")
+        give_time()
+        return
+
+    print("\nThe classifier is starting. Keep this program running.")
+    print("\nOn this computer, open:")
+    print(f"  {local_url}")
+
+    if local_ip:
+        print("\nOn a phone or another device connected to the same Wi-Fi, type:")
+        print(f"  http://{local_ip}:{port}")
+    else:
+        print("\nCould not determine this computer's local IP address.")
+        print("Run 'ipconfig' on Windows or 'hostname -I' on Linux to find it.")
+        print(f"Then type http://YOUR-COMPUTER-IP:{port} on the other device.")
+
+    print("\nBoth devices must be on the same trusted local network.")
+    print("If prompted, allow Python/Streamlit through your private-network firewall.")
+    print("Do not expose this unauthenticated app directly to the public internet.")
+
+    webbrowser.open(local_url)
+    give_time()
 # ============================================================
 # PROJECT PATHS
 # ============================================================
@@ -1094,7 +1172,8 @@ def main():
             "Change settings \n"
             "Learn \n"
             "Choose a set of saved settings\n"
-            "See current settings"
+            "See current settings\n"
+            "Deploy image classifier"
         )
         options = [
             "Defaults",
@@ -1102,6 +1181,7 @@ def main():
             "Learn",
             "Saved settings",
             "See current settings",
+            "Deploy image classifier",
         ]
         option, index = pick(options, user_input, indicator="=>", default_index=0)
 
@@ -1156,5 +1236,7 @@ def main():
             learn_menu[option]()
         elif option == "Saved settings":
             saved_settings_menu()
+        elif option == "Deploy image classifier":
+            deploy_image_classifier()
 if __name__ == "__main__":
     main()
