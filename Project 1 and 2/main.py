@@ -15,6 +15,8 @@ import socket
 import subprocess
 import sys
 import webbrowser
+from urllib.error import URLError
+from urllib.request import urlopen
 
 # functionality for saving device specifc info 
 def get_device_specs():
@@ -127,7 +129,7 @@ def get_local_ip():
 
 
 def deploy_image_classifier():
-    """Start the Streamlit classifier and show the URL for other devices."""
+    """Start Streamlit, wait until it is ready, and show connection details."""
     clear_terminal()
     app_path = PROJECT_DIR / "image_classifier_app.py"
 
@@ -145,11 +147,12 @@ def deploy_image_classifier():
 
     local_ip = get_local_ip()
     port = 8501
-    local_url = f"http://localhost:{port}"
+    local_url = f"http://127.0.0.1:{port}"
+    network_url = f"http://{local_ip}:{port}" if local_ip else None
 
     print("Starting the image classifier web server...")
     try:
-        subprocess.Popen(
+        server_process = subprocess.Popen(
             [
                 sys.executable, "-m", "streamlit", "run", str(app_path),
                 "--server.address", "0.0.0.0",
@@ -164,20 +167,39 @@ def deploy_image_classifier():
         give_time()
         return
 
-    print("\nThe classifier is starting. Keep this program running.")
-    print("\nOn this computer, open:")
-    print(f"  {local_url}")
-
-    if local_ip:
-        print("\nOn a phone or another device connected to the same Wi-Fi, type:")
-        print(f"  http://{local_ip}:{port}")
+    # Streamlit needs time to initialize. Opening the browser immediately can
+    # cause a connection-refused page, even when the server starts successfully.
+    print("Waiting for Streamlit to become ready...")
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        if server_process.poll() is not None:
+            print("\nStreamlit exited before it became ready.")
+            print("Review the error output above and check your Python environment.")
+            give_time()
+            return
+        try:
+            with urlopen(local_url, timeout=1):
+                break
+        except (OSError, URLError):
+            time.sleep(0.5)
     else:
-        print("\nCould not determine this computer's local IP address.")
-        print("Run 'ipconfig' on Windows or 'hostname -I' on Linux to find it.")
-        print(f"Then type http://YOUR-COMPUTER-IP:{port} on the other device.")
+        print("\nStreamlit did not become ready within 60 seconds.")
+        print("Review the Streamlit errors above. You can also run the app directly.")
+        give_time()
+        return
 
-    print("\nBoth devices must be on the same trusted local network.")
-    print("If prompted, allow Python/Streamlit through your private-network firewall.")
+    print("\nThe classifier is ready.")
+    print(f"On this computer: {local_url}")
+    if network_url:
+        print("On another device connected to the same trusted Wi-Fi:")
+        print(f"  {network_url}")
+    else:
+        print("Could not determine this computer's local IP address.")
+        print("Run 'hostname -I' on Linux or 'ipconfig' on Windows to find it.")
+
+    print("\nThe webpage also displays the network address for other devices.")
+    print("Keep this program and the Streamlit server running.")
+    print("Allow port 8501 through your private-network firewall if prompted.")
     print("Do not expose this unauthenticated app directly to the public internet.")
 
     webbrowser.open(local_url)
