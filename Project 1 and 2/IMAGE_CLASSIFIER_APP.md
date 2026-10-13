@@ -41,17 +41,3 @@ If it does not load, check that the host computer's firewall allows Python/Strea
 The app accepts JPG, JPEG, PNG, and WEBP images and shows the predicted class, confidence, and probabilities for all eight classes. It loads the saved model only; it does not start dataset downloads or model training. It reads the expected input dimensions from the saved model and resizes uploaded images accordingly.
 
 **Security note:** This setup is for access on a trusted local network. Do not port-forward port 8501 or expose the app directly to the public internet; the app has no authentication.
-
-
-## Deploy from the main menu
-
-You can also launch the web interface from the project's terminal menu:
-
-1. Run the project's usual entry point, `main.py`.
-2. Select **Deploy image classifier** from the main menu.
-3. The program starts Streamlit, opens the page on the host computer, and prints the URL to type into a phone or other device on the same Wi-Fi network.
-4. Keep the program/terminal and the Streamlit server running while people use the page.
-
-The menu option checks that both `image_classifier_app.py` and `image_classifier.keras` exist before starting. It uses port `8501`. If another app already occupies that port, stop that app or change the port in `deploy_image_classifier()` in `main.py`.
-
-If other devices cannot connect, allow Python/Streamlit through the host computer's firewall on private networks. Do not expose this unauthenticated app directly to the public internet.
