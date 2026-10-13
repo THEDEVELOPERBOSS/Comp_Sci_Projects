@@ -6,4 +6,4 @@ pick
 tabulate
 huggingface_hub
 streamlit
-fiftytone
+fiftyone
