@@ -1,0 +1,58 @@
+========================================
+ Expo Project Diagnostic and Repair
+========================================
+Project: /home/markdahl/CODING/Comp_Sci_Projects/Project 3/goal-app
+Log: /home/markdahl/CODING/Comp_Sci_Projects/Project 3/goal-app/expo-repair.log
+
+[OK] Configuration backups created: /home/markdahl/CODING/Comp_Sci_Projects/Project 3/goal-app/.expo-repair-backup/20261030-124632
+
+=== Checking Node and npm ===
+v26.8.1
+12.2.1
+
+=== Checking Expo dependencies ===
+npm notice run goal-app@1.0.0 npx
+npm notice run 'expo-doctor'
+Running 21 checks on your project...
+21/21 checks passed. No issues detected!
+
+=== Validating package.json ===
+[OK] package.json is valid JSON.
+
+=== Checking Expo configuration ===
+[OK] app.json is valid JSON.
+
+=== Checking configured assets ===
+[OK] icon: ./assets/images/icon.png
+[OK] android.adaptiveIcon.foregroundImage: ./assets/images/android-icon-foreground.png
+
+=== Checking Expo Router ===
+[OK] Found src/app.
+Entry point: expo-router/entry
+Expo dependency: ~57.0.31
+Expo Router: ~57.0.29
+
+=== Checking installed dependencies ===
+[OK] node_modules exists.
+
+=== Aligning Expo package versions ===
+npm notice run goal-app@1.0.0 npx
+npm notice run 'expo' install --check
+Dependencies are up to date
+
+=== Final Expo Doctor check ===
+npm notice run goal-app@1.0.0 npx
+npm notice run 'expo-doctor'
+Running 21 checks on your project...
+21/21 checks passed. No issues detected!
+
+========================================
+ Diagnostics and safe repairs finished.
+========================================
+Log saved to: /home/markdahl/CODING/Comp_Sci_Projects/Project 3/goal-app/expo-repair.log
+
+Next, start Expo with:
+npx expo start --tunnel --clear
+
+If the manifest asset warning remains, inspect
+expo-repair.log and the asset paths in app.json.

@@ -5,12 +5,12 @@ import { initializeDatabase } from "../db/database";
 export default function HomeScreen() {
   const [databaseReady, setDatabaseReady] = useState(false); // tracks database readiness state
   useEffect(() => { // runs the effect when the component mounts
-    async function setupDatabase() { // defines an asychronous function to organize intializtion steps
+    async function setupDatabase() { // defines an asynchronousfunction to organize initialization steps
       try {
         await initializeDatabase(); // waits for SQLite tables to be intialized
-        setDatabaseReady(true); // marks the database as ready only after intialization succeeds
+        setDatabaseReady(true); // marks the database as ready only after initialization succeeds
       } catch (error) { // reports initialization failures instead of silently ignoring them
-        console.error("Failed to intialize database", error);
+        console.error("Failed to initialize database", error);
       }
     }
 
@@ -22,9 +22,9 @@ export default function HomeScreen() {
       <Text style={styles.heading}>Goal Tracker</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Today's Habits</Text>
+        <Text style={styles.cardTitle}>Daily Habits</Text>
         <Text style={styles.cardText}>Your daily habits will appear here.</Text>
-        <Text>databaseReady</Text>
+        <Text>{String(databaseReady)}</Text>
       </View>
 
       <View style={styles.card}>
