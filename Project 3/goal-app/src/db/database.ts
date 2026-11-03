@@ -37,3 +37,29 @@ export async function initializeDatabase() {
     );
   `);
 }
+export async function createHabit(
+  name: string,
+  weeklyTarget: number,
+  selectedDays: number[]
+
+) {
+  const db = await dbPromise;
+
+  // Insert the new habit
+  const result = await db.runAsync(
+    "INSERT INTO habits (name, weekly_target) VALUES (?, ?)", // Adds a new database record. ? Reprsents a value SQLite will safely insert
+    [name, weeklyTarget]
+  );
+
+  // Get the ID SQLite assigned to the habit
+  const habitId = result.lastInsertRowId; // retrieves the ID of the newly created habit
+
+  // Save each selected weekday
+  for (const day of selectedDays) { // loops through the selected weekdays
+    await db.runAsync(
+      "INSERT INTO habit_schedule_days (habit_id, weekday) VALUES (?, ?)",
+      [habitId, day]
+    );
+  }
+  return habitId;
+}

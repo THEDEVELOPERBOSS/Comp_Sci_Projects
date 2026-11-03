@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { initializeDatabase } from "../db/database";
+import { router } from "expo-router";
+import { Pressable } from "react-native";
 export default function HomeScreen() {
   const [databaseReady, setDatabaseReady] = useState(false); // tracks database readiness state
   useEffect(() => { // runs the effect when the component mounts
@@ -20,6 +22,12 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <Text style={styles.greeting}>Your Progress</Text>
       <Text style={styles.heading}>Goal Tracker</Text>
+      <Pressable>
+        style={styles.addButton}
+        onPress={() => router.push("/create-habit")}
+      >
+        <Text style={styles.addButton}
+      </Pressable>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Daily Habits</Text>
