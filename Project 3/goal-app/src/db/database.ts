@@ -1,5 +1,12 @@
 import * as SQLite from "expo-sqlite";
-
+export type Habit = { // This is a TypeScript type 
+  id: number; // describes what one habit looks like when SQLite returns it.
+  name: string;
+  created_at: string;
+  active: number;
+  weekly_target: number | null;
+  scheduled_days: string | null;
+};
 // Open a local database stored on the device.
 export const dbPromise = SQLite.openDatabaseAsync("goal_tracker.db");
 
@@ -62,4 +69,32 @@ export async function createHabit(
     );
   }
   return habitId;
+}
+
+export async function getHabits(): Promise<Habit[]> {
+  const db = await dbPromise;
+
+  const habits = await db.getAllAsync<Habit>(`
+    SELECT
+      habits.*,
+      -- Combine all selected weekdays into one string.
+      GROUP_CONCAT(habit_schedule_days.weekday) AS scheduled_days
+
+    FROM habits
+
+    -- Connect habits to their scheduled weekdays.
+    LEFT JOIN habit_schedule_days 
+      ON habits.id = habit_schedule_days.habit_id
+
+    -- Only retrieve habits that are currently active.
+    WHERE habits.active = 1
+
+    -- Group schedule days together for each habit.
+    GROUP BY habits.id
+
+    -- Show the newest habits first.
+    ORDER BY habits.created_at DESC
+`);
+
+  return habits;
 }
