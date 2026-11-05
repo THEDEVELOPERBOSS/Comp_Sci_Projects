@@ -6,6 +6,7 @@ export type Habit = { // This is a TypeScript type
   active: number;
   weekly_target: number | null;
   scheduled_days: string | null;
+  completed_today: number; // 0 means not completed. 1 means completed
 };
 // Open a local database stored on the device.
 export const dbPromise = SQLite.openDatabaseAsync("goal_tracker.db");
@@ -85,6 +86,7 @@ export async function getHabits(): Promise<Habit[]> {
     -- Connect habits to their scheduled weekdays.
     LEFT JOIN habit_schedule_days 
       ON habits.id = habit_schedule_days.habit_id
+      AND habit_completions.completion_date = date('now', 'localtime')
 
     -- Only retrieve habits that are currently active.
     WHERE habits.active = 1
@@ -94,6 +96,11 @@ export async function getHabits(): Promise<Habit[]> {
 
     -- Show the newest habits first.
     ORDER BY habits.created_at DESC
+
+    CASE
+    WHEN habit_completions.id IS NULL THEN 0
+    ELSE 1
+    END AS completed_today,
 `);
 
   return habits;
