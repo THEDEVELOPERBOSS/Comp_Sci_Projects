@@ -24,6 +24,12 @@ export default function RootLayout() {
             presentation: "modal",
           }}
         />
+        <Stack.Screen 
+          name="history"
+          options={{
+            title: "Completion History",
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );

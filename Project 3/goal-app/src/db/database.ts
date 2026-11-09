@@ -8,6 +8,11 @@ export type Habit = { // This is a TypeScript type
   scheduled_days: string | null;
   completed_today: number; // 0 means not completed. 1 means completed
 };
+export type CompletionHistory = {
+  habit_id: number;
+  habit_name: string;
+  completion_date: string;
+}
 // Open a local database stored on the device.
 export const dbPromise = SQLite.openDatabaseAsync("goal_tracker.db");
 
@@ -123,4 +128,27 @@ export async function completeHabit(habitId: number) {
     VALUES (?, date('now', 'localtime'))`,
     [habitId]
   );
+}
+export async function getCompletionHistory(): Promise<CompletionHistory[]> {
+  const db = await dbPromise;
+
+  const history = await db.getAllAsync<CompletionHistory>(`
+    SELECT
+      habit_completions.habit_id,
+      habits.name AS habit_name,
+      habit_completions.completion_date
+
+    -- Tells SQLite where to retrieve the records
+    FROM habit_completions 
+
+    -- Connects each completion to its corresponding habit so we can retrieve its name
+    INNER JOIN habits 
+      ON habit_completions.habit_id = habits.id
+
+    -- Sorts the newest completion dates first
+    ORDER BY habit_completions.completion_date DESC
+
+  `);
+
+  return history;
 }

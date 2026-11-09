@@ -55,7 +55,12 @@ export default function HomeScreen() {
       >
         <Text style={styles.addButtonText}>+ Add Habit</Text>
       </Pressable>
-
+      <Pressable
+        style={styles.historyButton}
+        onPress={() => router.push("/history")}
+      >
+        <Text style={styles.historyButtonText}>View Completion History</Text>
+      </Pressable>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Daily Habits</Text>
 
@@ -177,6 +182,18 @@ const styles = StyleSheet.create({
   },
   completeButtonText: {
     color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  historyButton: {
+    backgroundColor: "#172554",
+    padding: 16, 
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  historyButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "bold",
   },
 });
