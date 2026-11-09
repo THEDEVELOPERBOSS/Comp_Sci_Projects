@@ -72,36 +72,55 @@ export async function createHabit(
   return habitId;
 }
 
+
 export async function getHabits(): Promise<Habit[]> {
   const db = await dbPromise;
 
   const habits = await db.getAllAsync<Habit>(`
     SELECT
       habits.*,
+
       -- Combine all selected weekdays into one string.
-      GROUP_CONCAT(habit_schedule_days.weekday) AS scheduled_days
+      GROUP_CONCAT(habit_schedule_days.weekday) AS scheduled_days,
+
+      -- Check whether this habit was completed today.
+      CASE
+        WHEN habit_completions.id IS NULL THEN 0
+        ELSE 1
+      END AS completed_today
 
     FROM habits
 
     -- Connect habits to their scheduled weekdays.
-    LEFT JOIN habit_schedule_days 
+    LEFT JOIN habit_schedule_days
       ON habits.id = habit_schedule_days.habit_id
+
+    -- Connect habits to today's completion records.
+    LEFT JOIN habit_completions
+      ON habits.id = habit_completions.habit_id
       AND habit_completions.completion_date = date('now', 'localtime')
 
-    -- Only retrieve habits that are currently active.
+    -- Only retrieve active habits.
     WHERE habits.active = 1
 
     -- Group schedule days together for each habit.
     GROUP BY habits.id
 
-    -- Show the newest habits first.
+    -- Show newest habits first.
     ORDER BY habits.created_at DESC
-
-    CASE
-    WHEN habit_completions.id IS NULL THEN 0
-    ELSE 1
-    END AS completed_today,
-`);
+  `);
 
   return habits;
+}
+
+
+export async function completeHabit(habitId: number) {
+  const db = await dbPromise;
+
+  await db.runAsync(
+    `INSERT OR IGNORE INTO habit_completions
+    (habit_id, completion_date)
+    VALUES (?, date('now', 'localtime'))`,
+    [habitId]
+  );
 }

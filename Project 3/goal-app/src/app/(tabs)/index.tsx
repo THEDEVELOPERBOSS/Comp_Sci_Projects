@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { initializeDatabase, getHabits, type Habit } from "../../db/database";
+import { initializeDatabase, getHabits, completeHabit, type Habit,} from "../../db/database";
 import { router } from "expo-router";
 import { StyleSheet, Text, View, Pressable } from "react-native";
 export default function HomeScreen() {
@@ -28,6 +28,22 @@ export default function HomeScreen() {
 
     setupDatabase();
   }, []);
+
+  async function handleCompleteHabit(habitId: number) {
+    try {
+      // Save todays completioon in SQLite
+      await completeHabit(habitId);
+
+      // Retrieve the updated habit records
+      const updatedHabits = await getHabits();
+
+      // Update the dashboard
+      setHabits(updatedHabits);
+
+    } catch (error) {
+      console.error("Failed to completete habit:", error);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -59,6 +75,15 @@ export default function HomeScreen() {
               <Text style={styles.cardText}>
                 Scheduled days: {habit.scheduled_days}
               </Text>
+              <Pressable
+                style={styles.completeButton}
+                onPress={() => handleCompleteHabit(habit.id)}
+                disabled={habit.completed_today === 1} // makes it so that once it is completed it can not be clicked again for that day 
+              >
+                <Text style={styles.completeButtonText}>
+                  {habit.completed_today === 1 ? "Completed" : "Mark Complete"}
+                </Text>
+              </Pressable>
             </View>
           ))
         )}
@@ -142,5 +167,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#172554",
     marginBottom: 6,
+  },
+  completeButton: {
+    backgroundColor: "#00ff00",
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 12,
+  },
+  completeButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
 });
